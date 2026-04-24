@@ -1,0 +1,76 @@
+.wrap { display: flex; flex-direction: column; gap: 16px; }
+.header { display: flex; flex-direction: column; gap: 4px; }
+.title { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); }
+.subtitle { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); }
+
+.timeline { display: flex; flex-direction: column; gap: 4px; }
+
+.row {
+  display: grid;
+  grid-template-columns: 32px 50px 1fr 1fr 28px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color 0.15s;
+}
+.rowWin  { border-left: 3px solid rgba(45,212,164,0.5); }
+.rowLoss { border-left: 3px solid rgba(224,92,58,0.5); }
+
+.result {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px; font-weight: 700;
+}
+.win     { background: rgba(45,212,164,0.15); color: var(--teal); }
+.loss    { background: rgba(224,92,58,0.12);  color: var(--loss); }
+.unknown { background: var(--bg3); color: var(--text3); }
+
+.date {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; color: var(--text3);
+  white-space: nowrap;
+}
+
+.maps { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.mapChip {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px; font-weight: 600;
+  padding: 2px 8px; border-radius: 4px;
+}
+.bo3Badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  padding: 1px 5px; border-radius: 3px;
+  background: rgba(155,127,232,0.12); color: #9b7fe8;
+  border: 1px solid rgba(155,127,232,0.2);
+}
+
+.bans { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.bansLabel {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; color: var(--text3); text-transform: uppercase;
+}
+.banChip {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px; font-weight: 600;
+}
+.noBans { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); }
+
+.link {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px; color: var(--text3);
+  text-decoration: none;
+  transition: color 0.15s;
+  text-align: center;
+}
+.link:hover { color: var(--accent); }
+
+.empty {
+  color: var(--text3); font-family: 'DM Mono', monospace;
+  font-size: 13px; padding: 40px 0; text-align: center;
+}

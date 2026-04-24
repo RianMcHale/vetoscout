@@ -1,0 +1,53 @@
+.wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+
+.strip {
+  display: flex;
+  gap: 3px;
+}
+
+.dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  cursor: default;
+}
+
+.win  { background: rgba(45,212,164,0.18); color: var(--teal); border: 1px solid rgba(45,212,164,0.3); }
+.loss { background: rgba(224,92,58,0.15);  color: var(--loss); border: 1px solid rgba(224,92,58,0.25); }
+
+.record {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.streak {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+.streakWin  { background: rgba(45,212,164,0.12); color: var(--teal); }
+.streakLoss { background: rgba(224,92,58,0.12);  color: var(--loss); }

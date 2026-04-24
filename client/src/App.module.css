@@ -1,0 +1,313 @@
+.app {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  position: relative;
+}
+
+.scanlines {
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.025) 2px,
+    rgba(0,0,0,0.025) 4px
+  );
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Header */
+.header {
+  border-bottom: 1px solid var(--border);
+  padding: 20px 0;
+  margin-bottom: 32px;
+  position: sticky;
+  top: 0;
+  background: rgba(10,11,13,0.92);
+  backdrop-filter: blur(8px);
+  z-index: 50;
+}
+.headerInner {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logoIcon {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: #0a0b0d;
+  flex-shrink: 0;
+}
+.logoText {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+.logoText span { color: var(--accent); }
+.badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+  border: 1px solid var(--border2);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+/* Main — always centered at 980px */
+.main {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+  position: relative;
+}
+
+/* Config card */
+.configCard {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.statusBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  min-height: 18px;
+}
+.dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--text3);
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.dotActive {
+  background: var(--teal);
+  box-shadow: 0 0 6px var(--teal);
+  animation: pulse 1s infinite;
+}
+.dotError { background: var(--loss); }
+.dotDone  { background: var(--teal); }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.35; } }
+
+.statusText {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--text3);
+}
+
+.progressTrack {
+  height: 3px;
+  background: var(--bg4);
+  border-radius: 2px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.errorMsg {
+  margin-top: 12px;
+  background: rgba(224,92,58,0.08);
+  border: 1px solid rgba(224,92,58,0.25);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--loss);
+}
+
+/* Debug panel */
+.debugCard {
+  background: var(--bg2);
+  border: 1px solid rgba(240,170,60,0.25);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+}
+.debugHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.debugTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text2);
+  flex-wrap: wrap;
+}
+.debugBadgeGood {
+  background: rgba(45,212,164,0.12);
+  color: var(--teal);
+  border: 1px solid rgba(45,212,164,0.25);
+  border-radius: 4px;
+  padding: 1px 7px;
+  font-size: 11px;
+}
+.debugBadgeBad {
+  background: rgba(224,92,58,0.12);
+  color: var(--loss);
+  border: 1px solid rgba(224,92,58,0.25);
+  border-radius: 4px;
+  padding: 1px 7px;
+  font-size: 11px;
+}
+.debugBadgeWarn {
+  background: rgba(240,170,60,0.12);
+  color: var(--accent);
+  border: 1px solid rgba(240,170,60,0.25);
+  border-radius: 4px;
+  padding: 1px 7px;
+  font-size: 11px;
+}
+.debugToggle {
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  color: var(--text3);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  padding: 3px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.debugToggle:hover { color: var(--text2); border-color: var(--text3); }
+.debugBody {
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.debugNote { color: var(--text3); font-size: 11px; margin-bottom: 4px; }
+.debugRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+}
+.debugRow:last-child { border-bottom: none; }
+.debugStatus { font-weight: 500; min-width: 90px; }
+.debugOk   { color: var(--teal); }
+.debugWarn { color: var(--accent); }
+.debugErr  { color: var(--loss); }
+.debugMatchId { color: var(--text3); }
+.debugFaction { color: var(--blue); }
+.debugHttp { color: var(--text3); }
+.debugDrops { color: var(--text2); flex: 1; }
+.debugBans { color: var(--teal); }
+.debugError { color: var(--loss); font-style: italic; }
+
+/* Results */
+.results {
+  animation: fadeUp 0.4s ease;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Opponent header */
+.oppHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 20px 24px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.avatar {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  object-fit: cover;
+  background: var(--bg4);
+  flex-shrink: 0;
+}
+.oppName {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  margin-bottom: 5px;
+}
+.oppMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 5px;
+  flex-wrap: wrap;
+}
+
+.metaStat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metaLabel {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.metaVal {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.metaDivider {
+  color: var(--text3);
+  font-size: 13px;
+}
+
+@media (max-width: 700px) {
+  .main { padding: 0 16px 60px; }
+  .configCard { padding: 16px; }
+}
+
+/* ── Two-column layout ── */
+/* Main content stays centered. Panel is fixed to the right of the page. */
+.contentRow {
+  display: block;
+}
+
+.mainCol {
+  /* no special styles needed — just fills the centered main */
+}
+
+.withPanel {
+  /* no change to main width */
+}

@@ -1,0 +1,175 @@
+.wrap { display: flex; flex-direction: column; gap: 16px; }
+
+/* Controls */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.controlGroup { display: flex; align-items: center; gap: 8px; }
+.controlLabel {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.btnGroup { display: flex; gap: 4px; }
+.btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 5px 12px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn:hover { border-color: var(--border2); color: var(--text); }
+.btnActive { background: var(--accent); color: #000; border-color: var(--accent); }
+.btnUndo, .btnReset {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 5px 12px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btnUndo:hover:not(:disabled), .btnReset:hover:not(:disabled) { border-color: var(--border2); color: var(--text); }
+.btnUndo:disabled, .btnReset:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* Sequence strip */
+.sequenceStrip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 12px 16px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.seqStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 60px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  opacity: 0.5;
+  transition: all 0.2s;
+}
+.seqActive { opacity: 1; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.seqDone { opacity: 1; }
+.seqTeam { font-family: 'Rajdhani', sans-serif; font-size: 11px; font-weight: 700; }
+.seqAction { font-family: 'DM Mono', monospace; font-size: 9px; text-transform: uppercase; color: var(--text3); }
+.seqMap { font-family: 'Rajdhani', sans-serif; font-size: 11px; font-weight: 600; }
+.seqPending { font-family: 'DM Mono', monospace; font-size: 14px; color: var(--accent); }
+
+/* Prompt */
+.prompt {
+  padding: 12px 16px;
+  background: var(--bg2);
+  border: 1px solid;
+  border-radius: var(--radius-lg);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.suggestion {
+  margin-left: 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+}
+
+/* Map grid */
+.mapGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+/* Map tile */
+.tile {
+  position: relative;
+  background: var(--bg2);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  overflow: hidden;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tile:hover:not(.tileBanned) { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+.tileBanned { cursor: default; opacity: 0.4; }
+.tilePicked { border-width: 2px; }
+.tileNext { cursor: pointer; }
+.tileNext:hover { opacity: 0.85; }
+
+.tileMapColor {
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px;
+  height: 100%;
+  border-radius: 4px 0 0 4px;
+}
+
+.tileName {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  padding-left: 10px;
+}
+
+.tileRates {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-left: 10px;
+}
+.rateRow { display: flex; align-items: center; gap: 6px; }
+.rateTeam { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text3); width: 24px; }
+.rateBar { flex: 1; height: 4px; background: var(--bg4); border-radius: 2px; overflow: hidden; }
+.rateFill { height: 100%; border-radius: 2px; }
+.ratePct { font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 600; width: 32px; text-align: right; }
+
+.statusBadge {
+  align-self: flex-start;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-left: 10px;
+}
+
+.nextHint {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--text3);
+  padding-left: 10px;
+  margin-top: auto;
+}

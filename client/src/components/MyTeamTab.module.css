@@ -1,0 +1,226 @@
+.wrap { display: flex; flex-direction: column; gap: 20px; }
+
+/* Summary cards */
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.summaryCard {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+}
+
+.summaryLabel {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 10px;
+}
+
+.summaryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.summaryTeam {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.summaryTeam:last-child { align-items: flex-end; }
+
+.summaryName {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--text3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+.summaryVal {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.summaryDivider {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+}
+
+/* Scouting points */
+.scoutSection { display: flex; flex-direction: column; gap: 8px; }
+
+.sectionTitle {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.sectionTitle::before {
+  content: '';
+  width: 3px; height: 13px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.scoutList { display: flex; flex-direction: column; gap: 6px; }
+
+.scoutPoint {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  border: 1px solid;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.scoutGood {
+  background: rgba(45,212,164,0.07);
+  border-color: rgba(45,212,164,0.2);
+  color: var(--text);
+}
+
+.scoutWarn {
+  background: rgba(240,170,60,0.07);
+  border-color: rgba(240,170,60,0.2);
+  color: var(--text);
+}
+
+.scoutIcon {
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.scoutGood .scoutIcon { color: var(--teal); }
+.scoutWarn .scoutIcon { color: var(--accent); }
+
+/* Map table */
+.tableHeader {
+  display: grid;
+  grid-template-columns: 1fr 100px 120px 100px;
+  padding: 6px 16px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text3);
+  border-bottom: 1px solid var(--border);
+}
+
+.rows { display: flex; flex-direction: column; gap: 4px; }
+
+.mapRow {
+  display: grid;
+  grid-template-columns: 1fr 100px 120px 100px;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color 0.15s;
+}
+
+.battleground { border-color: rgba(240,170,60,0.3); background: rgba(240,170,60,0.04); }
+.advantage    { border-color: rgba(45,212,164,0.2); }
+.danger       { border-color: rgba(224,92,58,0.2); }
+
+.mapName {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  padding-left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid;
+}
+
+.teamCol {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+}
+
+.wr {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+.games {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+}
+.noData {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--text3);
+}
+
+.vsCol { display: flex; align-items: center; padding: 0 8px; }
+
+.vsBar {
+  width: 100%;
+  height: 6px;
+  background: var(--bg4);
+  border-radius: 3px;
+  display: flex;
+  overflow: hidden;
+  gap: 1px;
+}
+.vsLeft  { height: 100%; border-radius: 3px 0 0 3px; transition: width 0.5s; }
+.vsRight { height: 100%; border-radius: 0 3px 3px 0; transition: width 0.5s; }
+
+.mapCol { padding-left: 16px; }
+
+.footer {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+  text-align: center;
+}
+
+.empty {
+  color: var(--text3);
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  padding: 40px 0;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .summaryGrid { grid-template-columns: 1fr; }
+}

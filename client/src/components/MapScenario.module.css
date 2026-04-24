@@ -1,0 +1,91 @@
+.section {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.heading {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.heading::before {
+  content: '';
+  width: 3px; height: 13px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.desc {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 14px;
+}
+.desc strong { color: var(--text); font-weight: 500; }
+
+.pills { margin-bottom: 20px; }
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  margin: 3px;
+}
+.pillSub { font-size: 10px; opacity: 0.7; }
+
+.danger { background: rgba(224,92,58,0.14); color: var(--loss); border: 1px solid rgba(224,92,58,0.24); }
+.warn   { background: rgba(240,170,60,0.14); color: var(--accent); border: 1px solid rgba(240,170,60,0.24); }
+.safe   { background: rgba(45,212,164,0.14); color: var(--teal); border: 1px solid rgba(45,212,164,0.24); }
+.info   { background: rgba(74,158,255,0.14); color: var(--blue); border: 1px solid rgba(74,158,255,0.24); }
+
+.probLabel {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 12px;
+}
+
+.probList { display: flex; flex-direction: column; gap: 8px; }
+.probRow {
+  display: grid;
+  grid-template-columns: 90px 1fr 42px;
+  align-items: center;
+  gap: 10px;
+}
+.probMap {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+}
+.bar {
+  height: 5px;
+  background: var(--bg4);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.8s ease;
+}
+.pct {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+  text-align: right;
+}

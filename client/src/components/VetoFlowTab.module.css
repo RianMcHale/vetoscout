@@ -1,0 +1,67 @@
+.wrap { display: flex; flex-direction: column; gap: 12px; }
+
+.sectionTitle {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text2);
+  display: flex; align-items: center; gap: 8px;
+}
+.sectionTitle::before {
+  content: ''; width: 3px; height: 13px;
+  background: var(--accent); border-radius: 2px;
+}
+.subtitle {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; color: var(--text3);
+  margin-top: -6px;
+}
+
+.orderGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.col {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.colLabel {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 0.07em; text-transform: uppercase;
+}
+.bars { display: flex; flex-direction: column; gap: 7px; }
+.bar { display: flex; align-items: center; gap: 8px; }
+.mapName {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px; font-weight: 600; color: var(--text);
+  width: 58px; flex-shrink: 0;
+}
+.track {
+  flex: 1; height: 5px;
+  background: var(--bg4); border-radius: 3px; overflow: hidden;
+}
+.fill { height: 100%; border-radius: 3px; }
+.pct {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; color: var(--text3);
+  width: 28px; text-align: right; flex-shrink: 0;
+}
+
+.insight {
+  background: rgba(240,170,60,0.07);
+  border: 1px solid rgba(240,170,60,0.2);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text2);
+  display: flex; gap: 8px; align-items: flex-start;
+}
+
+@media (max-width: 700px) {
+  .orderGrid { grid-template-columns: 1fr; }
+}
