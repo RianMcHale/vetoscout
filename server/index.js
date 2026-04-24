@@ -1456,7 +1456,7 @@ app.get('/api/match-rounds-proxy/:playerId', async (req, res) => {
 
 
 // ── FACEIT OAuth2 (FACEIT Connect) ───────────────────────────────────────
-const FACEIT_CLIENT_ID     = process.env.FACEIT_CLIENT_ID || '7bda3fdf-144e-4110-b101-b9c8cc26f66c';
+const FACEIT_CLIENT_ID     = process.env.FACEIT_CLIENT_ID || '2efe57f0-9c9a-4919-b2bb-e016d6134ce1';
 const FACEIT_CLIENT_SECRET = process.env.FACEIT_CLIENT_SECRET || '';
 const FACEIT_REDIRECT_URI  = process.env.FACEIT_REDIRECT_URI || 'https://www.vetoscout.com/api/auth/callback';
 
