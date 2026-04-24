@@ -339,7 +339,7 @@ function assignRoles(playerScoresList) {
 
 app.get('/api/setup', async (req, res) => {
   // Input validation
-  const matchInput = (req.query.matchId || '').trim();
+  const matchInput = (req.query.matchInput || '').trim();
   if (!matchInput) return res.status(400).json({ error: 'matchId is required.' });
   // Only allow UUIDs, FACEIT match URLs, or alphanumeric IDs
   if (!/^[a-zA-Z0-9\-\/:\.]+$/.test(matchInput) || matchInput.length > 200) {
