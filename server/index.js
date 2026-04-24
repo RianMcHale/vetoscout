@@ -1,4 +1,4 @@
-require('dotenv').config();
+try { require('dotenv').config(); } catch (_) {} // optional — Railway injects env vars directly
 const https = require('https');
 require('events').EventEmitter.defaultMaxListeners = 50;
 const express = require('express');
