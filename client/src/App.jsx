@@ -7,7 +7,7 @@ import MapCharts from './components/MapCharts';
 import VetoStrategy from './components/VetoStrategy';
 import MapScenario from './components/MapScenario';
 import MyTeamTab from './components/MyTeamTab';
-import ReportTab from './components/ReportTab';
+// import ReportTab from './components/ReportTab';
 import TabLayout from './components/TabLayout';
 import FormGuide from './components/FormGuide';
 import UpcomingPanel from './components/UpcomingPanel';
@@ -84,7 +84,7 @@ export default function App() {
     />
   ) : null;
 
-  const reportTab = result ? <ReportTab result={result} poolMaps={poolMaps} /> : null;
+  // const reportTab = result ? <ReportTab result={result} poolMaps={poolMaps} /> : null;
 
   const vetoSimTab = result ? (
     <VetoSimulator
@@ -111,7 +111,7 @@ export default function App() {
     { label: 'My Team',           icon: '⚑', content: myTeamTab },
     { label: 'Veto Simulator',    icon: '⊘', content: vetoSimTab },
     { label: 'History',           icon: '◷', content: historyTab },
-    { label: 'AI Briefing',       icon: '✦', content: reportTab },
+    // { label: 'AI Briefing',       icon: '✦', content: reportTab },
   ] : [];
 
   return (
