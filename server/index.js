@@ -1455,6 +1455,122 @@ app.get('/api/match-rounds-proxy/:playerId', async (req, res) => {
 
 
 
+// ── FACEIT OAuth2 (FACEIT Connect) ───────────────────────────────────────
+const FACEIT_CLIENT_ID     = process.env.FACEIT_CLIENT_ID || '7bda3fdf-144e-4110-b101-b9c8cc26f66c';
+const FACEIT_CLIENT_SECRET = process.env.FACEIT_CLIENT_SECRET || '';
+const FACEIT_REDIRECT_URI  = process.env.FACEIT_REDIRECT_URI || 'https://www.vetoscout.com/api/auth/callback';
+
+// Step 1: Redirect user to FACEIT login
+app.get('/api/auth/faceit', (req, res) => {
+  const state = require('crypto').randomBytes(16).toString('hex');
+  const params = new URLSearchParams({
+    response_type: 'code',
+    client_id: FACEIT_CLIENT_ID,
+    redirect_uri: FACEIT_REDIRECT_URI,
+    scope: 'openid profile',
+    state,
+  });
+  res.redirect(`https://accounts.faceit.com/accounts?${params.toString()}`);
+});
+
+// Step 2: Handle callback — exchange code for token
+app.get('/api/auth/callback', async (req, res) => {
+  const { code } = req.query;
+  if (!code) return res.status(400).send('Missing authorization code');
+
+  try {
+    const basicAuth = Buffer.from(`${FACEIT_CLIENT_ID}:${FACEIT_CLIENT_SECRET}`).toString('base64');
+    const { data: tokenData } = await axios.post('https://api.faceit.com/auth/v1/oauth/token', 
+      new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: FACEIT_REDIRECT_URI,
+      }).toString(),
+      {
+        headers: {
+          'Authorization': `Basic ${basicAuth}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        timeout: 10000,
+      }
+    );
+
+    const accessToken = tokenData.access_token;
+    const idToken = tokenData.id_token;
+
+    // Decode the ID token to get user info (JWT — payload is base64)
+    let userInfo = {};
+    if (idToken) {
+      try {
+        const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString());
+        userInfo = { guid: payload.guid || payload.sub, nickname: payload.nickname, avatar: payload.picture };
+      } catch (_) {}
+    }
+
+    // If no guid from id_token, fetch from userinfo endpoint
+    if (!userInfo.guid && accessToken) {
+      try {
+        const { data: ui } = await axios.get('https://api.faceit.com/auth/v1/resources/userinfo', {
+          headers: { 'Authorization': `Bearer ${accessToken}` },
+          timeout: 5000,
+        });
+        userInfo = { guid: ui.guid || ui.sub, nickname: ui.nickname, avatar: ui.picture };
+      } catch (_) {}
+    }
+
+    console.log(`[auth] FACEIT login: ${userInfo.nickname} (${userInfo.guid})`);
+
+    // Send back an HTML page that stores the token in sessionStorage and redirects
+    res.send(`<!DOCTYPE html><html><head><title>VetoScout - Logging in...</title></head><body>
+      <script>
+        sessionStorage.setItem('faceit_token', ${JSON.stringify(accessToken)});
+        sessionStorage.setItem('faceit_user', ${JSON.stringify(JSON.stringify(userInfo))});
+        window.location.href = '/';
+      </script>
+      <p>Logging in... redirecting.</p>
+    </body></html>`);
+  } catch (e) {
+    console.error('[auth] token exchange failed:', e.response?.data || e.message);
+    res.status(500).send('FACEIT login failed. Please try again.');
+  }
+});
+
+// Step 3: Proxy endpoint — fetch user's scheduled matches using their token
+app.get('/api/auth/scheduled', async (req, res) => {
+  const token = (req.headers.authorization || '').replace('Bearer ', '');
+  const userId = req.query.userId;
+  if (!token || !userId) return res.json({ matches: [] });
+
+  try {
+    const { data } = await axios.get(
+      `https://www.faceit.com/api/match/v1/matches/groupByState?userId=${userId}`,
+      {
+        httpsAgent,
+        headers: {
+          'Accept': 'application/json',
+          'faceit-referer': 'web-next',
+          'Authorization': `Bearer ${token}`,
+        },
+        timeout: 10000,
+      }
+    );
+    const scheduled = data?.payload?.SCHEDULED || [];
+    res.json({ matches: scheduled });
+  } catch (e) {
+    console.log('[auth/scheduled] failed:', e.response?.status, e.message);
+    // Try without auth as fallback
+    try {
+      const { data } = await axios.get(
+        `https://www.faceit.com/api/match/v1/matches/groupByState?userId=${userId}`,
+        { httpsAgent, headers: { 'Accept': 'application/json', 'faceit-referer': 'web-next' }, timeout: 10000 }
+      );
+      res.json({ matches: data?.payload?.SCHEDULED || [] });
+    } catch (_) {
+      res.json({ matches: [] });
+    }
+  }
+});
+
 // ── Upcoming matches (uses FACEIT internal match API — no auth required) ────
 app.get('/api/upcoming/:teamId', async (req, res) => {
   const { teamId } = req.params;
