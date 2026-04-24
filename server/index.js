@@ -49,18 +49,10 @@ const analysisLimiter = rateLimit({
 app.use('/api/setup', analysisLimiter);
 app.use('/api/player-stats', analysisLimiter);
 
-// Stricter limit on Claude proxy: 5 per minute
-const claudeLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 5,
-  message: { error: 'AI briefing rate limit reached. Please wait before retrying.' },
-});
-app.use('/api/claude', claudeLimiter);
 
 
 const PORT = process.env.PORT || 3001;
 const FACEIT_API_KEY    = process.env.FACEIT_API_KEY;
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
 const FACEIT_BASE = 'https://open.faceit.com/data/v4';
 
 const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 20 });
@@ -1148,175 +1140,14 @@ app.post('/api/stats', (req, res) => {
   });
 });
 
-// Debug: test what upcoming matches look like for a player
 
-
-
-// Proxy for FACEIT internal scheduling APIs (requires browser session cookie)
-// Browser calls this with its cookies forwarded so FACEIT auth works
-app.get('/api/upcoming-proxy', async (req, res) => {
-  const { url, cookie: queryCookie } = req.query;
-  if (!url) return res.status(400).json({ error: 'url required' });
-  if (!url.startsWith('https://www.faceit.com/') && !url.startsWith('https://api.faceit.com/')) {
-    return res.status(400).json({ error: 'Only faceit.com URLs allowed' });
-  }
-  // Cookie can come from: request header (same-origin), query param (passed explicitly by client)
-  const cookie = queryCookie || req.headers['x-faceit-cookie'] || req.headers.cookie || '';
-  try {
-    const { data } = await axios.get(url, {
-      httpsAgent,
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': req.headers['user-agent'] || 'Mozilla/5.0',
-        'faceit-referer': 'web-next',
-        ...(cookie ? { Cookie: cookie } : {}),
-      },
-      timeout: 10000,
-    });
-    res.json(data);
-  } catch (err) {
-    const status = err.response?.status || 502;
-    console.log('[upcoming-proxy] failed:', url.slice(0, 80), status);
-    res.status(status).json({ error: err.response?.data || err.message, status });
-  }
-});
 
 // Enrich a list of match IDs with opponent ELO diff
-// POST /api/enrich-matches { matchIds, myId, myAvgElo, myTeamName, rawMatches? }
-// rawMatches: already-fetched match objects from the browser proxy (avoids re-fetching)
-app.post('/api/enrich-matches', async (req, res) => {
-  const { matchIds, myId, myAvgElo, myTeamName, rawMatches } = req.body;
-  if (!matchIds?.length) return res.json({ matches: [] });
 
-  const myTeamLower = (myTeamName || '').toLowerCase();
-  // Build a lookup from raw match data if provided
-  const rawById = {};
-  for (const m of (rawMatches || [])) {
-    const id = m.id || m.matchId;
-    if (id) rawById[id] = m;
-  }
-
-  function difficultyFromElo(myElo, oppElo) {
-    if (!myElo || !oppElo) return { difficulty: 'Unknown', diffScore: null };
-    const diff = oppElo - myElo;
-    let difficulty;
-    if (diff > 200)       difficulty = 'Very Hard';
-    else if (diff > 75)   difficulty = 'Hard';
-    else if (diff > -75)  difficulty = 'Even';
-    else if (diff > -200) difficulty = 'Favourable';
-    else                  difficulty = 'Very Easy';
-    return { difficulty, diffScore: diff };
-  }
-
-  const enriched = await Promise.allSettled(
-    matchIds.slice(0, 10).map(async matchId => {
-      try {
-        // Use raw match data from browser if available, else fetch from API
-        const raw = rawById[matchId];
-        let oppTeam = null;
-        let scheduledAt = null;
-        let competition = null;
-
-        if (raw) {
-          // Raw data from groupByState endpoint — teams are faction1/faction2
-          const factions = raw.teams || {};
-          for (const [, t] of Object.entries(factions)) {
-            const tId   = t.id;
-            const tName = (t.name || '').toLowerCase();
-            if (tId !== myId && !tName.includes(myTeamLower)) { oppTeam = t; break; }
-          }
-          // schedule field is ISO string in raw data
-          if (raw.schedule) scheduledAt = Math.floor(new Date(raw.schedule).getTime() / 1000);
-          competition = raw.entity?.name || null;
-        } else {
-          // Fallback: fetch from FACEIT open API
-          const { data: details } = await faceit(`/matches/${matchId}`);
-          const dTeams = details?.teams || {};
-          for (const [, t] of Object.entries(dTeams)) {
-            const tId   = t.faction_id || t.team_id;
-            const tName = (t.name || t.faction_name || '').toLowerCase();
-            if (tId !== myId && !tName.includes(myTeamLower)) { oppTeam = t; break; }
-          }
-          scheduledAt = details?.scheduled_at || null;
-          competition = details?.competition_name || details?.championship_name || null;
-        }
-
-        // Opponent player IDs — raw uses roster[].id, open API uses roster[].player_id
-        const oppPlayers = (oppTeam?.roster || oppTeam?.players || [])
-          .map(p => p.player_id || p.id).filter(Boolean);
-
-        // Fetch opponent ELOs
-        let oppAvgElo = null;
-        if (oppPlayers.length > 0) {
-          const eloRes = await Promise.allSettled(
-            oppPlayers.slice(0, 5).map(pid => faceit(`/players/${pid}`).then(r => r.data))
-          );
-          const elos = eloRes
-            .filter(r => r.status === 'fulfilled')
-            .map(r => parseInt(r.value?.games?.cs2?.faceit_elo || 0))
-            .filter(e => e > 0);
-          oppAvgElo = elos.length ? Math.round(elos.reduce((a, b) => a + b, 0) / elos.length) : null;
-        }
-
-        const { difficulty, diffScore } = difficultyFromElo(myAvgElo, oppAvgElo);
-
-        return {
-          matchId,
-          matchUrl: `https://www.faceit.com/en/cs2/room/${matchId}`,
-          opponent: {
-            name:   oppTeam?.name || 'Unknown',
-            avatar: oppTeam?.avatar || null,
-            avgElo: oppAvgElo,
-          },
-          scheduledAt,
-          competition,
-          difficulty,
-          diffScore,
-        };
-      } catch (e) {
-        console.error('[enrich]', matchId, e.message);
-        return null;
-      }
-    })
-  );
-
-  const matches = enriched
-    .filter(r => r.status === 'fulfilled' && r.value)
-    .map(r => r.value)
-    .sort((a, b) => (a.scheduledAt || 0) - (b.scheduledAt || 0));
-
-  res.json({ matches });
-});
 
 
 // Claude API proxy — browser can't call Anthropic directly due to CORS
-app.post('/api/claude', async (req, res) => {
-  const { messages, system, max_tokens } = req.body;
-  try {
-    const { data } = await axios.post(
-      'https://api.anthropic.com/v1/messages',
-      {
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: max_tokens || 1000,
-        ...(system ? { system } : {}),
-        messages,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        timeout: 30000,
-      }
-    );
-    res.json(data);
-  } catch (err) {
-    console.error('[claude proxy]', err.response?.status, err.message);
-    res.status(err.response?.status || 500).json({ error: err.response?.data || err.message });
-  }
-});
+
 
 
 // Debug: dumps full voting + results structure for a match
@@ -1622,213 +1453,65 @@ app.get('/api/match-rounds-proxy/:playerId', async (req, res) => {
 
 
 
-// POST /api/generate-pdf — generates a match brief PDF
-// Body: { opponent, stats, players, formGuide, myTeamStats, competitionName }
-app.post('/api/generate-pdf', async (req, res) => {
-  const { opponent, stats, players, formGuide, myTeamStats, competitionName, matchUrl } = req.body;
-  const { execFile } = require('child_process');
-  const path = require('path');
-  const os = require('os');
-  const fs = require('fs');
 
-  // Write a Python script to generate the PDF
-  const outPath = path.join(os.tmpdir(), `vetoscout_${Date.now()}.pdf`);
 
-  const oppName  = opponent?.name || 'Opponent';
-  const mapPool  = ['Mirage','Inferno','Dust2','Nuke','Ancient','Anubis','Overpass'];
-  const winRates = stats?.winRates || {};
-  const overallWR = stats?.overallWR ?? '?';
+// ── Upcoming matches (uses FACEIT internal match API — no auth required) ────
+app.get('/api/upcoming/:teamId', async (req, res) => {
+  const { teamId } = req.params;
+  try {
+    // Get team roster to find a player ID
+    const { data: leagueData } = await axios.get(
+      `https://www.faceit.com/api/team-leagues/v1/teams/${teamId}/profile/leagues/summary`,
+      { httpsAgent, headers: { 'Accept': 'application/json', 'faceit-referer': 'web-next' }, timeout: 8000 }
+    );
+    const members = leagueData?.payload?.[0]?.active_members || [];
+    if (members.length === 0) return res.json({ matches: [] });
 
-  // Sorted maps: best and worst
-  const sortedMaps = mapPool
-    .filter(m => winRates[m] != null)
-    .sort((a, b) => winRates[b] - winRates[a]);
-  const bestMaps  = sortedMaps.slice(0, 2).map(m => `${m} (${winRates[m]}%)`).join(', ') || 'N/A';
-  const worstMaps = sortedMaps.slice(-2).reverse().map(m => `${m} (${winRates[m]}%)`).join(', ') || 'N/A';
-
-  const formStr = (formGuide || []).map(f => f.result).join(' ');
-  const topPlayer = (players || []).sort((a, b) => (parseFloat(b.kd)||0) - (parseFloat(a.kd)||0))[0];
-  const topPlayerStr = topPlayer
-    ? `${topPlayer.nickname} (${topPlayer.role}) — ${parseFloat(topPlayer.kd||0).toFixed(2)} K/D, ${Math.round(topPlayer.adr||0)} ADR`
-    : 'N/A';
-
-  const topBans = Object.entries(stats?.banRates || {})
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3).map(([m, r]) => `${m} (${r}%)`).join(', ') || 'N/A';
-
-  const myBestMap = myTeamStats?.mapStats
-    ? Object.entries(myTeamStats.mapStats)
-        .filter(([, v]) => v?.played >= 3)
-        .sort((a, b) => (b[1].wr||0) - (a[1].wr||0))
-        .slice(0, 2).map(([m, v]) => `${m} (${v.wr}%)`).join(', ')
-    : 'N/A';
-
-  const playerRows = (players || []).slice(0, 5).map(p =>
-    `(${JSON.stringify(p.nickname)}, ${JSON.stringify(p.role||'')}, ${JSON.stringify(parseFloat(p.kd||0).toFixed(2))}, ${JSON.stringify(String(Math.round(p.adr||0)))}, ${JSON.stringify(String(Math.round((p.entryRate||0)*100)) + '%')})`
-  ).join(',\n    ');
-
-  const script = `
-import sys
-sys.stdout.reconfigure(encoding='utf-8')
-from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
-from reportlab.lib.units import mm
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
-from reportlab.lib.styles import ParagraphStyle
-from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
-from reportlab.pdfgen import canvas
-from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate
-
-W, H = A4
-
-BG       = colors.HexColor('#0f1117')
-BG2      = colors.HexColor('#181c24')
-ACCENT   = colors.HexColor('#f0aa3c')
-TEAL     = colors.HexColor('#2dd4a4')
-RED      = colors.HexColor('#e05c3a')
-TEXT     = colors.HexColor('#e8eaf0')
-TEXT2    = colors.HexColor('#9ba3b8')
-TEXT3    = colors.HexColor('#5a6070')
-BORDER   = colors.HexColor('#242836')
-WIN_CLR  = colors.HexColor('#2dd4a4')
-LOSE_CLR = colors.HexColor('#e05c3a')
-
-def make_pdf(path):
-    doc = SimpleDocTemplate(
-        path, pagesize=A4,
-        leftMargin=18*mm, rightMargin=18*mm,
-        topMargin=16*mm, bottomMargin=16*mm
-    )
-
-    normal    = ParagraphStyle('n',  fontName='Helvetica',       fontSize=9,  textColor=TEXT2,  leading=14, spaceAfter=0)
-    heading   = ParagraphStyle('h',  fontName='Helvetica-Bold',  fontSize=22, textColor=TEXT,   leading=26)
-    subhead   = ParagraphStyle('sh', fontName='Helvetica-Bold',  fontSize=11, textColor=ACCENT, leading=16, spaceBefore=8, spaceAfter=4)
-    small     = ParagraphStyle('sm', fontName='Helvetica',       fontSize=8,  textColor=TEXT3,  leading=12)
-    mono      = ParagraphStyle('mo', fontName='Courier',         fontSize=9,  textColor=TEXT2,  leading=14)
-    bold_val  = ParagraphStyle('bv', fontName='Helvetica-Bold',  fontSize=10, textColor=TEXT,   leading=14)
-
-    story = []
-
-    # Header block
-    story.append(Paragraph('VETOSCOUT', ParagraphStyle('vs', fontName='Helvetica-Bold', fontSize=9, textColor=ACCENT, leading=12, letterSpacing=2)))
-    story.append(Spacer(1, 2*mm))
-    story.append(Paragraph(f'Pre-Match Brief: {${JSON.stringify(oppName)}}', heading))
-    comp = ${JSON.stringify(competitionName || '')}
-    if comp:
-        story.append(Paragraph(comp, small))
-    story.append(HRFlowable(width='100%', thickness=1, color=ACCENT, spaceAfter=8, spaceBefore=4))
-
-    # Overview row
-    overview_data = [
-        [Paragraph('OVERALL WIN RATE', small), Paragraph('FORM (LAST 10)', small), Paragraph('KEY PLAYER', small)],
-        [Paragraph(f'{${JSON.stringify(String(overallWR))}}%', ParagraphStyle('ov', fontName='Helvetica-Bold', fontSize=18,
-            textColor=TEAL if ${Number(overallWR) || 0} >= 50 else RED, leading=22)),
-         Paragraph(${JSON.stringify(formStr)} or '-', mono),
-         Paragraph(${JSON.stringify(topPlayerStr)}, bold_val)],
-    ]
-    t = Table(overview_data, colWidths=[45*mm, 75*mm, None])
-    t.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), BG2),
-        ('TEXTCOLOR',  (0,0), (-1,-1), TEXT),
-        ('GRID',       (0,0), (-1,-1), 0.5, BORDER),
-        ('PADDING',    (0,0), (-1,-1), 6),
-        ('ROWBACKGROUNDS', (0,0), (-1,-1), [BG2, BG2]),
-    ]))
-    story.append(t)
-    story.append(Spacer(1, 4*mm))
-
-    # Map analysis
-    story.append(Paragraph('MAP ANALYSIS', subhead))
-    map_data = [
-        [Paragraph('MAP', small), Paragraph('WIN RATE', small), Paragraph('GAMES', small), Paragraph('ASSESSMENT', small)],
-    ]
-    map_pool = ['Mirage','Inferno','Dust2','Nuke','Ancient','Anubis','Overpass']
-    win_rates = ${JSON.stringify(winRates)}
-    for m in map_pool:
-        wr = win_rates.get(m)
-        if wr is None:
-            continue
-        if wr >= 60:   assess, clr = 'Strong - consider banning', TEAL
-        elif wr >= 45: assess, clr = 'Neutral', TEXT2
-        else:           assess, clr = 'Weak - force here', RED
-        map_data.append([
-            Paragraph(m, bold_val),
-            Paragraph(f'{wr}%', ParagraphStyle('wr', fontName='Helvetica-Bold', fontSize=11, textColor=clr, leading=14)),
-            Paragraph(str(${JSON.stringify(stats?.playCounts||{})} .get(m, '-')), normal),
-            Paragraph(assess, ParagraphStyle('as', fontName='Helvetica', fontSize=9, textColor=clr, leading=12)),
-        ])
-    t2 = Table(map_data, colWidths=[35*mm, 25*mm, 20*mm, None])
-    t2.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1a1f2c')),
-        ('BACKGROUND', (0,1), (-1,-1), BG2),
-        ('GRID',       (0,0), (-1,-1), 0.5, BORDER),
-        ('PADDING',    (0,0), (-1,-1), 6),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [BG2, colors.HexColor('#1a1f2c')]),
-    ]))
-    story.append(t2)
-    story.append(Spacer(1, 4*mm))
-
-    # Players
-    story.append(Paragraph('PLAYER ROSTER', subhead))
-    p_data = [
-        [Paragraph(h, small) for h in ['PLAYER', 'ROLE', 'K/D', 'ADR', 'ENTRY%']],
-    ] + [
-        ${playerRows || '[Paragraph("N/A", normal), Paragraph("", normal), Paragraph("", normal), Paragraph("", normal), Paragraph("", normal)]'}
-    ]
-
-    # Build player rows properly
-    players_list = ${JSON.stringify((players||[]).slice(0,5).map(p => [p.nickname||'?', p.role||'Rifler', parseFloat(p.kd||0).toFixed(2), String(Math.round(p.adr||0)), String(Math.round((p.entryRate||0)*100))+'%']))}
-    p_data = [[Paragraph(h, small) for h in ['PLAYER', 'ROLE', 'K/D', 'ADR', 'ENTRY%']]]
-    for row in players_list:
-        p_data.append([Paragraph(str(c), bold_val if i == 0 else normal) for i, c in enumerate(row)])
-
-    t3 = Table(p_data, colWidths=[45*mm, 35*mm, 22*mm, 22*mm, None])
-    t3.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1a1f2c')),
-        ('BACKGROUND', (0,1), (-1,-1), BG2),
-        ('GRID',       (0,0), (-1,-1), 0.5, BORDER),
-        ('PADDING',    (0,0), (-1,-1), 6),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [BG2, colors.HexColor('#1a1f2c')]),
-    ]))
-    story.append(t3)
-    story.append(Spacer(1, 4*mm))
-
-    # Veto recommendations
-    story.append(Paragraph('VETO RECOMMENDATIONS', subhead))
-    veto_text = f"<b>Their frequent bans:</b> {${JSON.stringify(topBans)}}<br/><b>Their best maps:</b> {${JSON.stringify(bestMaps)}}<br/><b>Their worst maps:</b> {${JSON.stringify(worstMaps)}}"
-    if ${JSON.stringify(myBestMap !== 'N/A')}:
-        veto_text += f"<br/><b>Your strong maps:</b> {${JSON.stringify(myBestMap)}}"
-    story.append(Paragraph(veto_text, ParagraphStyle('vt', fontName='Helvetica', fontSize=9, textColor=TEXT2, leading=16, backColor=BG2, borderPadding=8)))
-    story.append(Spacer(1, 4*mm))
-
-    # Footer
-    story.append(HRFlowable(width='100%', thickness=0.5, color=BORDER, spaceBefore=4, spaceAfter=4))
-    story.append(Paragraph('Generated by VetoScout · Data from FACEIT API · For internal team use', small))
-
-    doc.build(story)
-
-make_pdf(${JSON.stringify(outPath)})
-print('OK')
-`;
-
-  const tmpScript = path.join(os.tmpdir(), `vs_pdf_${Date.now()}.py`);
-  fs.writeFileSync(tmpScript, script, 'utf8');
-
-  execFile('python3', [tmpScript], { timeout: 30000 }, (err, stdout, stderr) => {
-    fs.unlinkSync(tmpScript);
-    if (err) {
-      console.error('[pdf] python error:', stderr);
-      return res.status(500).json({ error: 'PDF generation failed: ' + (stderr || err.message) });
+    // Try each player until we get scheduled matches
+    let scheduled = [];
+    for (const member of members.slice(0, 3)) {
+      try {
+        const { data } = await axios.get(
+          `https://www.faceit.com/api/match/v1/matches/groupByState?userId=${member.user_id}`,
+          { httpsAgent, headers: { 'Accept': 'application/json', 'faceit-referer': 'web-next' }, timeout: 8000 }
+        );
+        const matches = data?.payload?.SCHEDULED || [];
+        // Filter to matches involving this team
+        const teamMatches = matches.filter(m => {
+          const f1id = m.teams?.faction1?.id;
+          const f2id = m.teams?.faction2?.id;
+          return f1id === teamId || f2id === teamId;
+        });
+        if (teamMatches.length > 0) {
+          scheduled = teamMatches;
+          break;
+        }
+      } catch (_) {}
     }
-    if (!fs.existsSync(outPath)) {
-      return res.status(500).json({ error: 'PDF file not created' });
-    }
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="vetoscout_${oppName.replace(/[^a-z0-9]/gi, '_')}.pdf"`);
-    const stream = fs.createReadStream(outPath);
-    stream.pipe(res);
-    stream.on('end', () => { try { fs.unlinkSync(outPath); } catch {} });
-  });
+
+    const result = scheduled.map(m => {
+      const isF1 = m.teams?.faction1?.id === teamId;
+      const opp = isF1 ? m.teams?.faction2 : m.teams?.faction1;
+      return {
+        matchId: m.id,
+        matchUrl: `https://www.faceit.com/en/cs2/room/${m.id}`,
+        schedule: m.schedule,
+        competition: m.entity?.name || '',
+        round: m.entityCustom?.round || null,
+        opponent: {
+          name: opp?.name || '?',
+          avatar: opp?.avatar || null,
+          roster: (opp?.roster || []).map(p => ({ nickname: p.nickname, avatar: p.avatar })),
+        },
+        state: m.state,
+      };
+    }).sort((a, b) => new Date(a.schedule) - new Date(b.schedule));
+
+    res.json({ matches: result });
+  } catch (e) {
+    console.log('[upcoming] failed:', e.message);
+    res.json({ matches: [] });
+  }
 });
 
 // ── Health check for Railway ─────────────────────────────────────────────

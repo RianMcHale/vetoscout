@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import UpcomingPanel from './components/UpcomingPanel';
 import { MAPS } from './lib/maps';
 import { useAnalyze } from './hooks/useAnalyze';
 import InputForm from './components/InputForm';
@@ -7,10 +8,8 @@ import MapCharts from './components/MapCharts';
 import VetoStrategy from './components/VetoStrategy';
 import MapScenario from './components/MapScenario';
 import MyTeamTab from './components/MyTeamTab';
-// import ReportTab from './components/ReportTab';
 import TabLayout from './components/TabLayout';
 import FormGuide from './components/FormGuide';
-import UpcomingPanel from './components/UpcomingPanel';
 import VetoSimulator from './components/VetoSimulator';
 import VetoFlowTab from './components/VetoFlowTab';
 import HistoryTimeline from './components/HistoryTimeline';
@@ -84,7 +83,6 @@ export default function App() {
     />
   ) : null;
 
-  // const reportTab = result ? <ReportTab result={result} poolMaps={poolMaps} /> : null;
 
   const vetoSimTab = result ? (
     <VetoSimulator
@@ -111,7 +109,6 @@ export default function App() {
     { label: 'My Team',           icon: '⚑', content: myTeamTab },
     { label: 'Veto Simulator',    icon: '⊘', content: vetoSimTab },
     { label: 'History',           icon: '◷', content: historyTab },
-    // { label: 'AI Briefing',       icon: '✦', content: reportTab },
   ] : [];
 
   return (
@@ -215,14 +212,17 @@ export default function App() {
                   </div>
                 </div>
 
-                <TabLayout tabs={tabs} />
+                        {result?.opponent?.id && (
+            <UpcomingPanel
+              opponentId={result.opponent.id}
+              onSelectMatch={(id) => { setMatchInput(id); }}
+            />
+          )}
+
+          <TabLayout tabs={tabs} />
               </div>
             )}
           </div>
-
-          {showPanel && (
-            <UpcomingPanel myTeam={lastMyTeam} matchInput={lastMatchInput} onSelectMatch={handleSelectMatch} />
-          )}
         </div>
       </main>
     </div>
