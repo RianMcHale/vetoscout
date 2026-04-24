@@ -120,9 +120,6 @@ export default function UpcomingPanel({ opponentId, onSelectMatch }) {
           >
             Login with FACEIT
           </a>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 6 }}>
-            See your scheduled ESEA matches
-          </div>
         </div>
       )}
 
