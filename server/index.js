@@ -9,6 +9,26 @@ require('events').EventEmitter.defaultMaxListeners = 30;
 
 const app = express();
 app.set('trust proxy', 1); // Railway runs behind a proxy
+
+// ── Response cache (in-memory, clears on restart) ───────────────────────
+const responseCache = new Map();
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+function getCached(key) {
+  const entry = responseCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > CACHE_TTL) { responseCache.delete(key); return null; }
+  return entry.data;
+}
+
+function setCache(key, data) {
+  // Limit cache size to 50 entries
+  if (responseCache.size > 50) {
+    const oldest = responseCache.keys().next().value;
+    responseCache.delete(oldest);
+  }
+  responseCache.set(key, { data, ts: Date.now() });
+}
 app.use(cors({
   origin: process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim())
@@ -173,7 +193,6 @@ function buildRecommendation(playCounts, winCounts, banCounts, excludeMaps, acti
   return { suggestedBans: [ban1, ban2].filter(Boolean), reasoning: reasoning.trim(), lowConfidence: thinData };
 }
 
-app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 // Debug: dumps ALL player_stats keys + values for first player in a match
 
@@ -330,6 +349,11 @@ function assignRoles(playerScoresList) {
 }
 
 app.get('/api/setup', async (req, res) => {
+  // Check cache
+  const cacheKey = `setup:${req.query.matchInput}:${req.query.myTeam || ''}`;
+  const cached = getCached(cacheKey);
+  if (cached) { console.log('[cache] hit for', cacheKey); return res.json(cached); }
+
   // Input validation
   const matchInput = (req.query.matchInput || '').trim();
   if (!matchInput) return res.status(400).json({ error: 'matchId is required.' });
@@ -1051,7 +1075,7 @@ app.get('/api/setup', async (req, res) => {
       if (taggedPlayers.length === 0) taggedPlayers = players;
     }
 
-    res.json({
+    const responseData = {
       opponent: { name: oppName, avatar: oppAvatar, id: oppId, playerCount: oppPlayers.length },
       matchSummaries,
       coreLineupSize: corePlayerIds.length,
@@ -1060,7 +1084,9 @@ app.get('/api/setup', async (req, res) => {
       formGuide,
       myTeamStats,
       dataSource,
-    });
+    };
+    setCache(cacheKey, responseData);
+    res.json(responseData);
   } catch (err) {
     const s = err.response?.status;
     if (s === 401) return res.status(401).json({ error: 'Invalid FACEIT API key.' });
@@ -1151,27 +1177,7 @@ app.post('/api/stats', (req, res) => {
 
 
 // Debug: dumps full voting + results structure for a match
-// GET /api/debug-match/<match-id>
-app.get('/api/debug-match/:matchId', async (req, res) => {
-  try {
-    const { data } = await faceit(`/matches/${req.params.matchId}`);
-    res.json({
-      match_id:       data.match_id,
-      status:         data.status,
-      competition:    data.competition_name,
-      game_map:       data.game_map,
-      map:            data.map,
-      voting:         data.voting,
-      results:        data.results,
-      teams_keys:     Object.keys(data.teams || {}),
-      team_names:     Object.fromEntries(
-        Object.entries(data.teams || {}).map(([k,t]) => [k, t.name || t.faction_name])
-      ),
-    });
-  } catch (e) {
-    res.status(500).json({ error: e.message, status: e.response?.status });
-  }
-});
+
 
 
 // Proxy for FACEIT internal stats API

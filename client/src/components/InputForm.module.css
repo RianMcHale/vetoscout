@@ -24,10 +24,11 @@
   color: var(--text);
   font-family: 'DM Mono', monospace;
   font-size: 13px;
-  padding: 10px 14px;
+  padding: 10px 12px;
   outline: none;
   transition: border-color 0.2s;
   width: 100%;
+  min-width: 0;
 }
 .input:focus { border-color: var(--accent); }
 .input::placeholder { color: var(--text3); }
@@ -42,7 +43,7 @@
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  padding: 0 24px;
+  padding: 0 20px;
   height: 40px;
   cursor: pointer;
   transition: opacity 0.15s, transform 0.1s;
@@ -50,7 +51,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 110px;
+  min-width: 100px;
 }
 .btn:hover:not(:disabled) { opacity: 0.88; }
 .btn:active:not(:disabled) { transform: scale(0.97); }
@@ -65,6 +66,29 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-@media (max-width: 700px) {
-  .row { grid-template-columns: 1fr; }
+/* Tablet — stack into 2 rows */
+@media (max-width: 900px) {
+  .row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .row > .group:first-child {
+    grid-column: 1 / -1;
+  }
+  .btn {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
+/* Mobile — full stack */
+@media (max-width: 480px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+  .row > .group:first-child {
+    grid-column: auto;
+  }
+  .btn {
+    grid-column: auto;
+  }
 }
