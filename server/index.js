@@ -721,9 +721,10 @@ app.get('/api/setup', async (req, res) => {
 
     // Fetch match stats for up to 30 core matches
     const matchStatsResults = await Promise.allSettled(
-      coreDetails.slice(0, 30).map(m =>
-        faceit(`/matches/${m.match_id || m.matchId || m.id}/stats`).then(r => r.data)
-      )
+      coreDetails.slice(0, 30).map(m => {
+        const mid = m.match_id || m.matchId || m.id;
+        return faceit(`/matches/${mid}/stats`).then(r => ({ ...r.data, _matchId: mid }));
+      })
     );
 
     // Accumulate per-player stat totals across all matches
@@ -733,7 +734,8 @@ app.get('/api/setup', async (req, res) => {
 
     for (const r of matchStatsResults) {
       if (r.status !== 'fulfilled' || !r.value?.rounds) continue;
-      const statsMatchId = r.value.match_id || r.value.matchId || '';
+      const statsMatchId = r.value._matchId || r.value.match_id || r.value.matchId || r.value.id || '';
+      if (!statsMatchId) console.log('[stats] WARNING: no match_id on stats result, keys:', Object.keys(r.value).join(','));
       for (const round of r.value.rounds) {
         for (const team of (round.teams || [])) {
           for (const player of (team.players || [])) {
