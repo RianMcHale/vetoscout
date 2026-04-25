@@ -1,0 +1,295 @@
+.wizard {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+  animation: fadeUp 0.4s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Progress bar ── */
+.progress {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-bottom: 40px;
+}
+.progressStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.progressDot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg3);
+  border: 2px solid var(--border2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text3);
+  transition: all 0.3s;
+}
+.progressActive .progressDot {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.progressCurrent .progressDot {
+  background: var(--accent);
+  color: #0a0b0d;
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(240, 170, 60, 0.3);
+}
+.progressLabel {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 0.04em;
+}
+.progressActive .progressLabel { color: var(--text2); }
+
+/* ── Step card ── */
+.stepCard {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  animation: fadeUp 0.3s ease;
+}
+.stepTitle {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.stepSub {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--text3);
+  margin-bottom: 24px;
+}
+
+/* ── Input ── */
+.inputRow {
+  display: flex;
+  gap: 10px;
+}
+.input {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  padding: 12px 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  min-width: 0;
+}
+.input:focus { border-color: var(--accent); }
+.input::placeholder { color: var(--text3); }
+.input:disabled { opacity: 0.5; }
+
+.btn {
+  background: var(--accent);
+  color: #0a0b0d;
+  border: none;
+  border-radius: var(--radius);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0 24px;
+  height: 44px;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.15s;
+}
+.btn:hover:not(:disabled) { opacity: 0.88; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.error {
+  margin-top: 12px;
+  background: rgba(224,92,58,0.08);
+  border: 1px solid rgba(224,92,58,0.25);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--loss);
+}
+
+.backLink {
+  background: none;
+  border: none;
+  color: var(--text3);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  margin-top: 20px;
+  padding: 0;
+  transition: color 0.15s;
+}
+.backLink:hover { color: var(--text2); }
+
+/* ── Team selection ── */
+.teamGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.teamCard {
+  background: var(--bg3);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.1s;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.teamCard:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+.teamAvatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border2);
+}
+.teamName {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+.teamRoster {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+}
+.rosterPlayer {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+  background: var(--bg4);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* ── Map selection ── */
+.mapGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.mapCard {
+  position: relative;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.1s;
+  aspect-ratio: 16/10;
+  background: var(--bg3);
+}
+.mapCard:hover { border-color: var(--accent); transform: translateY(-1px); }
+.mapBanned {
+  border-color: var(--loss) !important;
+}
+.mapBanned .mapImg { filter: grayscale(0.8) brightness(0.4); }
+.mapImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: filter 0.2s;
+}
+.mapOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 8px;
+}
+.mapName {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+.mapBanIcon {
+  color: var(--loss);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* ── Launch ── */
+.launchRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.launchBtn {
+  background: var(--accent);
+  color: #0a0b0d;
+  border: none;
+  border-radius: var(--radius);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 12px 32px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.launchBtn:hover { opacity: 0.88; }
+.launchBtn:active { transform: scale(0.97); }
+
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid rgba(0,0,0,0.2);
+  border-top-color: #0a0b0d;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .wizard { padding: 20px 12px 60px; }
+  .stepCard { padding: 20px; }
+  .progress { gap: 20px; }
+  .progressLabel { display: none; }
+  .teamGrid { grid-template-columns: 1fr; }
+  .mapGrid { grid-template-columns: repeat(3, 1fr); }
+  .inputRow { flex-direction: column; }
+  .btn { width: 100%; justify-content: center; }
+  .launchRow { flex-direction: column-reverse; gap: 12px; }
+  .launchBtn { width: 100%; text-align: center; }
+}
+
+@media (max-width: 400px) {
+  .mapGrid { grid-template-columns: repeat(2, 1fr); }
+}

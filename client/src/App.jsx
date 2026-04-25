@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import UpcomingPanel from './components/UpcomingPanel';
+import SetupWizard from './components/SetupWizard';
 import { MAPS } from './lib/maps';
 import { useAnalyze } from './hooks/useAnalyze';
-import InputForm from './components/InputForm';
 import MetricCards from './components/MetricCards';
 import MapCharts from './components/MapCharts';
 import VetoStrategy from './components/VetoStrategy';
@@ -24,32 +24,24 @@ function LandingHero({ onGetStarted }) {
         <div className={styles.heroLogo}>
           <div className={styles.heroIcon}>◆</div>
         </div>
-        <h1 className={styles.heroTitle}>
-          VETO<span>SCOUT</span>
-        </h1>
-        <p className={styles.heroSub}>
-          CS2 Veto Analyzer for ESEA &amp; other FACEIT Tournaments 
-        </p>
+        <h1 className={styles.heroTitle}>VETO<span>SCOUT</span></h1>
+        <p className={styles.heroSub}>CS2 veto intelligence for FACEIT &amp; ESEA</p>
         <div className={styles.heroFeatures}>
           <div className={styles.featureCard}>
             <span className={styles.featureIcon}>⬡</span>
-            <span className={styles.featureLabel}>Map Ban Analysis</span>
+            <span className={styles.featureLabel}>Map ban analysis</span>
           </div>
           <div className={styles.featureCard}>
             <span className={styles.featureIcon}>◈</span>
-            <span className={styles.featureLabel}>Player Scouting</span>
+            <span className={styles.featureLabel}>Player scouting</span>
           </div>
           <div className={styles.featureCard}>
             <span className={styles.featureIcon}>⊘</span>
-            <span className={styles.featureLabel}>Veto Simulator</span>
+            <span className={styles.featureLabel}>Veto simulator</span>
           </div>
         </div>
-        <button className={styles.heroCta} onClick={onGetStarted}>
-          Get Started
-        </button>
-        <p className={styles.heroNote}>
-          Paste a FACEIT match room URL to analyse your opponent
-        </p>
+        <button className={styles.heroCta} onClick={onGetStarted}>Get Started</button>
+        <p className={styles.heroNote}>Paste a FACEIT match room URL to analyse your opponent</p>
       </div>
     </div>
   );
@@ -57,13 +49,11 @@ function LandingHero({ onGetStarted }) {
 
 export default function App() {
   const { status, statusMsg, progress, result, error, analyze, bansByMatchId } = useAnalyze();
-  const [showApp, setShowApp]               = useState(false);
+  const [view, setView]                     = useState('landing'); // landing | wizard | analysis
   const [lastExclude, setLastExclude]       = useState('');
   const [lastMyTeam, setLastMyTeam]         = useState('');
-  const [lastMatchInput, setLastMatchInput] = useState('');
 
   const loading = status === 'loading';
-  const hasResult = !!result;
 
   function getPoolMaps(excludeMaps) {
     if (!excludeMaps) return MAPS;
@@ -71,34 +61,52 @@ export default function App() {
     return MAPS.filter(m => !ex.some(e => m.toLowerCase().includes(e)));
   }
 
-  function handleSubmit(params) {
+  function handleWizardComplete(params) {
     setLastExclude(params.excludeMaps || '');
     setLastMyTeam(params.myTeam || '');
-    setLastMatchInput(params.matchInput || '');
-    setShowApp(true);
+    setView('analysis');
     analyze(params);
   }
 
   function handleSelectMatch(matchUrl) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     analyze({ matchInput: matchUrl, myTeam: lastMyTeam, excludeMaps: lastExclude, myPermaBans: '' });
-    setLastMatchInput(matchUrl);
   }
 
-  function setMatchInput(id) {
-    setLastMatchInput(id);
+  function handleNewAnalysis() {
+    setView('wizard');
   }
 
-  // Show landing page if user hasn't started yet
-  if (!showApp && !hasResult && status === 'idle') {
+  // Landing page
+  if (view === 'landing') {
     return (
       <div className={styles.app}>
         <div className={styles.scanlines} aria-hidden="true" />
-        <LandingHero onGetStarted={() => setShowApp(true)} />
+        <LandingHero onGetStarted={() => setView('wizard')} />
       </div>
     );
   }
 
+  // Wizard flow
+  if (view === 'wizard' && !result && !loading) {
+    return (
+      <div className={styles.app}>
+        <div className={styles.scanlines} aria-hidden="true" />
+        <header className={styles.header}>
+          <div className={styles.headerInner}>
+            <div className={styles.logo} onClick={() => setView('landing')} style={{ cursor: 'pointer' }}>
+              <div className={styles.logoIcon}>◆</div>
+              <span className={styles.logoText}>VETO<span>SCOUT</span></span>
+            </div>
+            <span className={styles.badge}>CS2 · FACEIT ESEA</span>
+          </div>
+        </header>
+        <SetupWizard onComplete={handleWizardComplete} onBack={() => setView('landing')} />
+      </div>
+    );
+  }
+
+  // Analysis view
   const poolMaps = getPoolMaps(lastExclude);
 
   const oppMapStats = result ? (() => {
@@ -123,13 +131,8 @@ export default function App() {
   ) : null;
 
   const myTeamTab = result ? (
-    <MyTeamTab
-      myTeamStats={result.myTeamStats}
-      oppName={result.opponent.name}
-      oppMapStats={oppMapStats}
-      oppOverallWR={result.stats.overallWR}
-      players={result.players}
-    />
+    <MyTeamTab myTeamStats={result.myTeamStats} oppName={result.opponent.name}
+      oppMapStats={oppMapStats} oppOverallWR={result.stats.overallWR} players={result.players} />
   ) : null;
 
   const vetoSimTab = result ? (
@@ -156,34 +159,39 @@ export default function App() {
 
       <header className={styles.header}>
         <div className={styles.headerInner}>
-          <div className={styles.logo} onClick={() => { if (!loading) { setShowApp(false); } }} style={{ cursor: 'pointer' }}>
+          <div className={styles.logo} onClick={() => { if (!loading) setView('landing'); }} style={{ cursor: 'pointer' }}>
             <div className={styles.logoIcon}>◆</div>
             <span className={styles.logoText}>VETO<span>SCOUT</span></span>
           </div>
-          <span className={styles.badge}>CS2 · FACEIT ESEA</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {result && (
+              <button onClick={handleNewAnalysis} className={styles.newBtn}>+ New Analysis</button>
+            )}
+            <span className={styles.badge}>CS2 · FACEIT ESEA</span>
+          </div>
         </div>
       </header>
 
       <main className={styles.main}>
-        <div className={styles.configCard}>
-          <InputForm onSubmit={handleSubmit} loading={loading} />
-          <div className={styles.statusBar}>
-            <span className={`${styles.dot} ${loading ? styles.dotActive : status === 'error' ? styles.dotError : status === 'done' ? styles.dotDone : ''}`} />
-            <span className={styles.statusText}>{statusMsg}</span>
-          </div>
-          {status === 'loading' && (
+        {/* Loading state */}
+        {loading && (
+          <div className={styles.loadingCard}>
+            <div className={styles.loadingSpinner} />
+            <div className={styles.loadingText}>{statusMsg}</div>
             <div className={styles.progressTrack}>
               <div className={styles.progressFill} style={{ width: `${progress}%` }} />
             </div>
-          )}
-          {error && <div className={styles.errorMsg}>⚠ {error}</div>}
-        </div>
+          </div>
+        )}
+
+        {error && <div className={styles.errorMsg}>⚠ {error}</div>}
 
         {result && (
           <div className={styles.results}>
             <div className={styles.oppHeader}>
               {result.opponent.avatar && (
-                <img className={styles.avatar} src={result.opponent.avatar} alt={result.opponent.name} onError={e => { e.target.style.display = 'none'; }} />
+                <img className={styles.avatar} src={result.opponent.avatar} alt={result.opponent.name}
+                  onError={e => { e.target.style.display = 'none'; }} />
               )}
               <div className={styles.oppInfo}>
                 <div className={styles.oppName}>{result.opponent.name}</div>
@@ -196,8 +204,7 @@ export default function App() {
                   <span className={styles.metaStat}>
                     <span className={styles.metaLabel}>W / L</span>
                     <span className={styles.metaVal}>
-                      <span style={{ color: 'var(--teal)' }}>{result.stats.totalWins}W</span>
-                      {' – '}
+                      <span style={{ color: 'var(--teal)' }}>{result.stats.totalWins}W</span>{' – '}
                       <span style={{ color: 'var(--loss)' }}>{result.stats.totalLosses}L</span>
                     </span>
                   </span>

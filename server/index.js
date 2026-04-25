@@ -352,6 +352,50 @@ function assignRoles(playerScoresList) {
   return assigned;
 }
 
+// ── Quick match room info (returns both teams for selection) ─────────────
+app.get('/api/match-info', async (req, res) => {
+  const matchInput = (req.query.matchInput || '').trim();
+  if (!matchInput) return res.status(400).json({ error: 'matchInput is required.' });
+
+  const roomId = extractRoomId(matchInput);
+  if (!roomId) return res.status(400).json({ error: 'Invalid match room URL or ID.' });
+
+  try {
+    // Check Redis cache first
+    const ck = `matchinfo:${roomId}`;
+    const cached = await rGet(ck);
+    if (cached) return res.json(cached);
+
+    const { data: room } = await faceit(`/matches/${roomId}`);
+    const teams = room.teams || {};
+    const result = {
+      matchId: roomId,
+      teams: Object.entries(teams).map(([key, t]) => ({
+        factionKey: key,
+        id: t.id || t.faction_id || t.team_id,
+        name: t.name || t.faction_name || 'Unknown',
+        avatar: t.avatar || null,
+        roster: (t.roster || t.players || []).map(p => ({
+          id: p.player_id || p.id,
+          nickname: p.nickname || p.name,
+          avatar: p.avatar || null,
+          elo: p.elo || p.faceit_elo || null,
+          level: p.gameSkillLevel || p.skill_level || null,
+        })),
+      })),
+      competition: room.entity?.name || room.competition_name || null,
+      status: room.status || room.state || null,
+    };
+
+    await rSet(ck, result, 300); // 5 min cache
+    res.json(result);
+  } catch (e) {
+    const s = e.response?.status;
+    if (s === 404) return res.status(404).json({ error: 'Match room not found.' });
+    res.status(s || 500).json({ error: e.message });
+  }
+});
+
 app.get('/api/setup', async (req, res) => {
   // Check cache
   const cacheKey = `setup:${req.query.matchInput}:${req.query.myTeam || ''}`;
