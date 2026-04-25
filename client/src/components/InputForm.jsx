@@ -39,11 +39,11 @@ export default function InputForm({ onSubmit, loading }) {
           />
         </div>
         <div className={styles.group}>
-          <label className={styles.label}>Our Permabans</label>
+          <label className={styles.label}>Your Permabans</label>
           <input
             className={styles.input}
             type="text"
-            placeholder="e.g. Nuke, Vertigo"
+            placeholder="e.g. Dust 2"
             value={myPermaBans}
             onChange={e => setPermaBans(e.target.value)}
             disabled={loading}
