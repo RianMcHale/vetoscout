@@ -1,14 +1,9 @@
 .panel {
-  position: fixed;
-  top: 80px;
-  right: 24px;
-  width: 300px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-height: calc(100vh - 100px);
-  overflow-y: auto;
-  z-index: 40;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+  overflow: hidden;
 }
 
 .heading {
@@ -21,32 +16,39 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border);
+  padding: 14px 18px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
 }
+.heading:hover { background: rgba(255,255,255,0.02); }
 
 .headingIcon { color: var(--accent); font-size: 14px; }
 
-.myElo {
+.chevron {
   margin-left: auto;
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  color: var(--accent);
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  text-transform: none;
+  font-size: 12px;
+  color: var(--text3);
+  transition: transform 0.2s;
+}
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.body {
+  padding: 0 18px 16px;
 }
 
 .list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
 }
 
 .matchCard {
-  background: var(--bg2);
+  background: var(--bg3);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius);
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
@@ -58,7 +60,7 @@
 .matchTop {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .oppAvatar {
@@ -91,36 +93,13 @@
   margin-top: 1px;
 }
 
-.diffBadge {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  padding: 2px 7px;
-  border-radius: 4px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.matchMeta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
 .dateStr {
   font-family: 'DM Mono', monospace;
   font-size: 10px;
   color: var(--text3);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
-
-.eloStr {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  color: var(--text3);
-}
-.eloStr strong { color: var(--text2); font-weight: 600; }
 
 .matchActions {
   display: flex;
@@ -144,7 +123,7 @@
 .analyzeBtn:hover { opacity: 0.85; }
 
 .roomLink {
-  background: var(--bg3);
+  background: var(--bg4);
   color: var(--text2);
   border: 1px solid var(--border);
   border-radius: 5px;
@@ -157,6 +136,31 @@
 }
 .roomLink:hover { border-color: var(--border2); color: var(--text); }
 
+.loginWrap {
+  padding: 16px 18px;
+  text-align: center;
+}
+.loginBtn {
+  display: inline-block;
+  padding: 8px 24px;
+  border-radius: 6px;
+  background: #ff5500;
+  color: #fff;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  transition: opacity 0.15s;
+}
+.loginBtn:hover { opacity: 0.88; }
+.loginNote {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+  margin-top: 6px;
+}
+
 .state {
   display: flex;
   align-items: center;
@@ -164,7 +168,7 @@
   font-family: 'DM Mono', monospace;
   font-size: 11px;
   color: var(--text3);
-  padding: 16px 0;
+  padding: 8px 0;
 }
 
 .spinner {
@@ -177,9 +181,10 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.errorMsg {
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  color: var(--loss);
-  padding: 8px 0;
+@media (max-width: 600px) {
+  .list {
+    grid-template-columns: 1fr;
+  }
+  .heading { padding: 12px 14px; }
+  .body { padding: 0 14px 14px; }
 }

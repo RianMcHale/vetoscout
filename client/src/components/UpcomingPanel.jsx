@@ -26,8 +26,8 @@ export default function UpcomingPanel({ opponentId, onSelectMatch }) {
   const [matches, setMatches] = useState(null);
   const [loading, setLoading] = useState(false);
   const [auth, setAuth] = useState(getFaceitAuth);
+  const [open, setOpen] = useState(true);
 
-  // Check auth on mount (in case user just logged in)
   useEffect(() => { setAuth(getFaceitAuth()); }, []);
 
   const load = useCallback(async () => {
@@ -40,7 +40,6 @@ export default function UpcomingPanel({ opponentId, onSelectMatch }) {
         timeout: 15000,
       });
 
-      // Filter to matches involving the opponent (if opponentId provided)
       let scheduled = data.matches || [];
       if (opponentId && scheduled.length > 0) {
         const oppMatches = scheduled.filter(m => {
@@ -48,7 +47,6 @@ export default function UpcomingPanel({ opponentId, onSelectMatch }) {
           const f2 = m.teams?.faction2?.id;
           return f1 === opponentId || f2 === opponentId;
         });
-        // Show opponent matches first, then others
         const otherMatches = scheduled.filter(m => {
           const f1 = m.teams?.faction1?.id;
           const f2 = m.teams?.faction2?.id;
@@ -57,11 +55,8 @@ export default function UpcomingPanel({ opponentId, onSelectMatch }) {
         scheduled = [...oppMatches, ...otherMatches];
       }
 
-      // Map to display format
       const mapped = scheduled.slice(0, 5).map(m => {
-        // Figure out which faction is "us" based on the logged-in user
         const userInF1 = (m.teams?.faction1?.roster || []).some(p => p.id === auth.user.guid);
-        const myTeam = userInF1 ? m.teams?.faction1 : m.teams?.faction2;
         const opp = userInF1 ? m.teams?.faction2 : m.teams?.faction1;
         const isOppMatch = opp?.id === opponentId;
         return {
@@ -71,10 +66,7 @@ export default function UpcomingPanel({ opponentId, onSelectMatch }) {
           competition: m.entity?.name || '',
           round: m.entityCustom?.round || null,
           isOppMatch,
-          opponent: {
-            name: opp?.name || '?',
-            avatar: opp?.avatar || null,
-          },
+          opponent: { name: opp?.name || '?', avatar: opp?.avatar || null },
         };
       });
 
@@ -95,70 +87,79 @@ export default function UpcomingPanel({ opponentId, onSelectMatch }) {
     setMatches(null);
   };
 
+  // Don't render at all if not logged in and no matches
+  if (!auth && !matches) {
+    return (
+      <div className={styles.panel}>
+        <div className={styles.loginWrap}>
+          <a href="/api/auth/faceit" className={styles.loginBtn}>Login with FACEIT</a>
+          <div className={styles.loginNote}>See your scheduled ESEA matches</div>
+        </div>
+      </div>
+    );
+  }
+
+  const matchCount = matches?.length || 0;
+
   return (
-    <aside className={styles.panel}>
-      <div className={styles.heading}>
+    <div className={styles.panel}>
+      <div className={styles.heading} onClick={() => setOpen(v => !v)}>
         <span className={styles.headingIcon}>◈</span>
-        Upcoming Matches
+        Upcoming Matches{matchCount > 0 && ` (${matchCount})`}
         {auth && (
-          <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: '0.7rem', color: 'var(--text3)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>
             {auth.user?.nickname}
-            <button onClick={handleLogout} style={{ background: 'none', border: 'none', color: '#e05c3a', cursor: 'pointer', fontSize: '0.7rem' }}>Logout</button>
+            <button
+              onClick={e => { e.stopPropagation(); handleLogout(); }}
+              style={{ background: 'none', border: 'none', color: '#e05c3a', cursor: 'pointer', fontSize: '0.65rem', marginLeft: 6 }}
+            >
+              logout
+            </button>
           </span>
         )}
+        <span className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`}>▾</span>
       </div>
 
-      {!auth && (
-        <div style={{ padding: '12px 16px', textAlign: 'center' }}>
-          <a
-            href="/api/auth/faceit"
-            style={{
-              display: 'inline-block', padding: '8px 20px', borderRadius: 6,
-              background: '#ff5500', color: '#fff', fontWeight: 600, fontSize: '0.85rem',
-              textDecoration: 'none',
-            }}
-          >
-            Login with FACEIT
-          </a>
-        </div>
-      )}
-
-      {auth && loading && (
-        <div className={styles.state}>
-          <div className={styles.spinner} />
-          <span>Loading schedule…</span>
-        </div>
-      )}
-
-      {auth && !loading && matches && matches.length === 0 && (
-        <div className={styles.state}>No upcoming matches found.</div>
-      )}
-
-      {auth && !loading && matches && matches.length > 0 && (
-        <div className={styles.list}>
-          {matches.map(m => (
-            <div key={m.matchId} className={styles.matchCard} style={m.isOppMatch ? { borderColor: '#e05c3a' } : {}}>
-              <div className={styles.matchTop}>
-                {m.opponent.avatar && (
-                  <img className={styles.oppAvatar} src={m.opponent.avatar} alt={m.opponent.name} onError={e => e.target.style.display = 'none'} />
-                )}
-                <div className={styles.matchInfo}>
-                  <div className={styles.oppName}>
-                    {m.opponent.name}
-                    {m.isOppMatch && <span style={{ color: '#e05c3a', fontSize: '0.7rem', marginLeft: 6 }}>● CURRENT OPP</span>}
-                  </div>
-                  {m.competition && <div className={styles.competition}>{m.competition}{m.round ? ` · R${m.round}` : ''}</div>}
-                </div>
-                <div className={styles.dateStr}>{formatDate(m.schedule)}</div>
-              </div>
-              <div className={styles.matchActions}>
-                <button className={styles.analyzeBtn} onClick={() => onSelectMatch(m.matchId)}>Analyse →</button>
-                <a className={styles.roomLink} href={m.matchUrl} target="_blank" rel="noreferrer">Room ↗</a>
-              </div>
+      {open && (
+        <div className={styles.body}>
+          {loading && (
+            <div className={styles.state}>
+              <div className={styles.spinner} />
+              <span>Loading schedule…</span>
             </div>
-          ))}
+          )}
+
+          {!loading && matches && matches.length === 0 && (
+            <div className={styles.state}>No upcoming matches found.</div>
+          )}
+
+          {!loading && matches && matches.length > 0 && (
+            <div className={styles.list}>
+              {matches.map(m => (
+                <div key={m.matchId} className={styles.matchCard} style={m.isOppMatch ? { borderColor: '#e05c3a' } : {}}>
+                  <div className={styles.matchTop}>
+                    {m.opponent.avatar && (
+                      <img className={styles.oppAvatar} src={m.opponent.avatar} alt={m.opponent.name} onError={e => e.target.style.display = 'none'} />
+                    )}
+                    <div className={styles.matchInfo}>
+                      <div className={styles.oppName}>
+                        {m.opponent.name}
+                        {m.isOppMatch && <span style={{ color: '#e05c3a', fontSize: '0.65rem', marginLeft: 6 }}>● CURRENT OPP</span>}
+                      </div>
+                      {m.competition && <div className={styles.competition}>{m.competition}{m.round ? ` · R${m.round}` : ''}</div>}
+                    </div>
+                    <div className={styles.dateStr}>{formatDate(m.schedule)}</div>
+                  </div>
+                  <div className={styles.matchActions}>
+                    <button className={styles.analyzeBtn} onClick={() => onSelectMatch(m.matchId)}>Analyse →</button>
+                    <a className={styles.roomLink} href={m.matchUrl} target="_blank" rel="noreferrer">Room ↗</a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
-    </aside>
+    </div>
   );
 }
