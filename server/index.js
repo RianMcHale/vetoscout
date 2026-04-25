@@ -1,5 +1,29 @@
 try { require('dotenv').config(); } catch (_) {} // optional — Railway injects env vars directly
 const https = require('https');
+const Redis = require('ioredis');
+
+// ── Redis cache ─────────────────────────────────────────────────────────
+const redis = process.env.REDIS_URL
+  ? new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: 2, lazyConnect: true, connectTimeout: 5000 })
+  : null;
+
+if (redis) {
+  redis.connect().then(() => console.log('[redis] connected')).catch(e => console.log('[redis] connection failed:', e.message));
+  redis.on('error', () => {}); // suppress noisy errors
+}
+
+async function rGet(key) {
+  if (!redis) return null;
+  try {
+    const val = await redis.get(key);
+    return val ? JSON.parse(val) : null;
+  } catch { return null; }
+}
+
+async function rSet(key, data, ttlSeconds) {
+  if (!redis) return;
+  try { await redis.set(key, JSON.stringify(data), 'EX', ttlSeconds); } catch {}
+}
 require('events').EventEmitter.defaultMaxListeners = 50;
 const express = require('express');
 const cors = require('cors');
@@ -9,26 +33,6 @@ require('events').EventEmitter.defaultMaxListeners = 30;
 
 const app = express();
 app.set('trust proxy', 1); // Railway runs behind a proxy
-
-// ── Response cache (in-memory, clears on restart) ───────────────────────
-const responseCache = new Map();
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
-
-function getCached(key) {
-  const entry = responseCache.get(key);
-  if (!entry) return null;
-  if (Date.now() - entry.ts > CACHE_TTL) { responseCache.delete(key); return null; }
-  return entry.data;
-}
-
-function setCache(key, data) {
-  // Limit cache size to 50 entries
-  if (responseCache.size > 50) {
-    const oldest = responseCache.keys().next().value;
-    responseCache.delete(oldest);
-  }
-  responseCache.set(key, { data, ts: Date.now() });
-}
 app.use(cors({
   origin: process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim())
@@ -351,8 +355,8 @@ function assignRoles(playerScoresList) {
 app.get('/api/setup', async (req, res) => {
   // Check cache
   const cacheKey = `setup:${req.query.matchInput}:${req.query.myTeam || ''}`;
-  const cached = getCached(cacheKey);
-  if (cached) { console.log('[cache] hit for', cacheKey); return res.json(cached); }
+  const cached = await rGet(cacheKey);
+  if (cached) { console.log('[redis] cache hit:', cacheKey); return res.json(cached); }
 
   // Input validation
   const matchInput = (req.query.matchInput || '').trim();
@@ -414,10 +418,14 @@ app.get('/api/setup', async (req, res) => {
     if (oppPlayers.length > 0) {
       // Fetch up to 200 matches for each of the 5 players in parallel
       const playerHistories = await Promise.allSettled(
-        oppPlayers.slice(0, 5).map(pid =>
-          faceit(`/players/${pid}/history?game=cs2&offset=0&limit=${HISTORY_LIMIT}`)
-            .then(r => r.data)
-        )
+        oppPlayers.slice(0, 5).map(async pid => {
+          const ck = `hist:${pid}`;
+          const cached = await rGet(ck);
+          if (cached) return cached;
+          const { data } = await faceit(`/players/${pid}/history?game=cs2&offset=0&limit=${HISTORY_LIMIT}`);
+          await rSet(ck, data, 900); // 15 min TTL
+          return data;
+        })
       );
 
       const idSets = playerHistories
@@ -721,9 +729,14 @@ app.get('/api/setup', async (req, res) => {
 
     // Fetch match stats for up to 30 core matches
     const matchStatsResults = await Promise.allSettled(
-      coreDetails.slice(0, 30).map(m => {
+      coreDetails.slice(0, 30).map(async m => {
         const mid = m.match_id || m.matchId || m.id;
-        return faceit(`/matches/${mid}/stats`).then(r => ({ ...r.data, _matchId: mid }));
+        const ck = `stats:${mid}`;
+        const cached = await rGet(ck);
+        if (cached) return { ...cached, _matchId: mid };
+        const { data } = await faceit(`/matches/${mid}/stats`);
+        await rSet(ck, data, 86400); // 24hr TTL — stats never change
+        return { ...data, _matchId: mid };
       })
     );
 
@@ -1088,7 +1101,7 @@ app.get('/api/setup', async (req, res) => {
       myTeamStats,
       dataSource,
     };
-    setCache(cacheKey, responseData);
+    await rSet(cacheKey, responseData, 600); // 10 min TTL
     res.json(responseData);
   } catch (err) {
     const s = err.response?.status;
