@@ -89,3 +89,8 @@
   color: var(--text3);
   text-align: right;
 }
+
+@media (max-width: 600px) {
+  .grid { grid-template-columns: 1fr !important; }
+  .card { padding: 12px; }
+}

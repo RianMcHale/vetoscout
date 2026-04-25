@@ -173,3 +173,11 @@
   padding-left: 10px;
   margin-top: auto;
 }
+
+@media (max-width: 600px) {
+  .mapGrid { grid-template-columns: 1fr 1fr !important; gap: 8px; }
+  .flowRow { flex-wrap: wrap; gap: 4px; }
+  .flowSlot { min-width: 48px; padding: 6px 4px; font-size: 9px; }
+  .controls { flex-wrap: wrap; gap: 6px; }
+  .card { padding: 12px; }
+}

@@ -51,3 +51,7 @@
 }
 .streakWin  { background: rgba(45,212,164,0.12); color: var(--teal); }
 .streakLoss { background: rgba(224,92,58,0.12);  color: var(--loss); }
+
+@media (max-width: 600px) {
+  .strip { flex-wrap: wrap; }
+}

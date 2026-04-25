@@ -46,3 +46,8 @@
 @media (max-width: 700px) {
   .grid { grid-template-columns: 1fr 1fr; }
 }
+
+@media (max-width: 400px) {
+  .grid { grid-template-columns: 1fr; }
+  .value { font-size: 22px; }
+}

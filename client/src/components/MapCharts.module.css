@@ -39,3 +39,9 @@
   height: 230px;
 }
 
+
+@media (max-width: 600px) {
+  .grid { grid-template-columns: 1fr; }
+  .canvasWrap { height: 200px; }
+  .card { padding: 14px; }
+}

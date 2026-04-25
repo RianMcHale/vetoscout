@@ -43,3 +43,17 @@
 .content {
   padding-top: 20px;
 }
+
+@media (max-width: 600px) {
+  .tabBar {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 0;
+  }
+  .tabBar::-webkit-scrollbar { display: none; }
+  .tab { padding: 8px 10px; font-size: 11px; }
+  .tabIcon { display: none; }
+  .content { padding-top: 14px; }
+}
