@@ -765,6 +765,8 @@ app.get('/api/setup', async (req, res) => {
             if (!acc.matchIds.has(statsMatchId)) {
               acc.matchIds.add(statsMatchId);
               acc.matchCount++;
+              // Count match win/loss only once per match (not per round in BO3)
+              acc.wins += toN(s['Result']);
             }
             acc.kills       += toN(s['Kills']);
             acc.deaths      += toN(s['Deaths']);
@@ -790,7 +792,6 @@ app.get('/api/setup', async (req, res) => {
             acc.flashSR         += toN(s['Flash Success Rate per Match']);
             acc.utilDmg         += toN(s['Utility Damage per Round in a Match'] || s['Utility Damage per Round'] || 0);
             acc.sniperKR        += toN(s['Sniper Kill Rate per Round']);
-            acc.wins            += toN(s['Result']); // 1 = win, 0 = loss
 
             // Per-map accumulation — round.round_stats.Map gives the map name
             const roundMap = normalizeMap(round.round_stats?.Map || round.round_stats?.map || '');
@@ -1273,6 +1274,8 @@ app.post('/api/player-stats', async (req, res) => {
           if (!acc.matchIds.has(matchId)) {
             acc.matchIds.add(matchId);
             acc.matchCount++;
+            // Count match win only once per match
+            acc.wins += team.score > (mapEntry.teams.find(t => t.teamId !== team.teamId)?.score || 0) ? 1 : 0;
           }
           acc.kd            += toN(p.kd);
           acc.adr           += toN(p.adr);
@@ -1300,7 +1303,6 @@ app.post('/api/player-stats', async (req, res) => {
                                (toN(p.sniperKills) / Math.max(1, toN(p.roundsPlayed))) ||
                                (toN(p.sniper_kills) / Math.max(1, toN(p.rounds_played)));
           acc.multiKills    += toN(p['2k'] || 0) + toN(p['3k'] || 0) * 1.5 + toN(p['4k'] || 0) * 3;
-          acc.wins          += team.score > (mapEntry.teams.find(t => t.teamId !== team.teamId)?.score || 0) ? 1 : 0;
 
           // Per-map tracking
           if (mapName) {
