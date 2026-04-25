@@ -25,19 +25,19 @@ function LandingHero({ onGetStarted }) {
           <div className={styles.heroIcon}>◆</div>
         </div>
         <h1 className={styles.heroTitle}>VETO<span>SCOUT</span></h1>
-        <p className={styles.heroSub}>CS2 veto intelligence for FACEIT &amp; ESEA</p>
+        <p className={styles.heroSub}>CS2 Veto Analyzer for ESEA &amp; other FACEIT Tournaments.</p>
         <div className={styles.heroFeatures}>
           <div className={styles.featureCard}>
             <span className={styles.featureIcon}>⬡</span>
-            <span className={styles.featureLabel}>Map ban analysis</span>
+            <span className={styles.featureLabel}>Map Ban Analysis</span>
           </div>
           <div className={styles.featureCard}>
             <span className={styles.featureIcon}>◈</span>
-            <span className={styles.featureLabel}>Player scouting</span>
+            <span className={styles.featureLabel}>Player Scouting</span>
           </div>
           <div className={styles.featureCard}>
             <span className={styles.featureIcon}>⊘</span>
-            <span className={styles.featureLabel}>Veto simulator</span>
+            <span className={styles.featureLabel}>Veto Simulator</span>
           </div>
         </div>
         <button className={styles.heroCta} onClick={onGetStarted}>Get Started</button>

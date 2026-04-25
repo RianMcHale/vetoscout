@@ -197,8 +197,9 @@
 
 /* ── Map selection ── */
 .mapGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
   margin-bottom: 28px;
 }
@@ -211,6 +212,9 @@
   transition: border-color 0.25s, transform 0.15s, box-shadow 0.25s;
   aspect-ratio: 3/4;
   background: var(--bg3);
+  width: calc(25% - 10px);
+  min-width: 130px;
+  flex-shrink: 0;
 }
 .mapCard:hover {
   border-color: var(--accent);
@@ -321,7 +325,7 @@
 
 /* ── Responsive ── */
 @media (max-width: 700px) {
-  .mapGrid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .mapCard { width: calc(33.33% - 10px); }
   .mapName { font-size: 14px; }
 }
 
@@ -331,7 +335,7 @@
   .progress { gap: 20px; }
   .progressLabel { display: none; }
   .teamGrid { grid-template-columns: 1fr; }
-  .mapGrid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .mapCard { width: calc(33.33% - 8px); min-width: 100px; }
   .mapName { font-size: 13px; }
   .mapBanIcon { font-size: 28px; }
   .inputRow { flex-direction: column; }
@@ -341,5 +345,5 @@
 }
 
 @media (max-width: 400px) {
-  .mapGrid { grid-template-columns: repeat(2, 1fr); }
+  .mapCard { width: calc(50% - 8px); }
 }
