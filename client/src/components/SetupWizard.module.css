@@ -1,5 +1,5 @@
 .wizard {
-  max-width: 640px;
+  max-width: 780px;
   margin: 0 auto;
   padding: 40px 20px 80px;
   animation: fadeUp 0.4s ease;
@@ -199,50 +199,93 @@
 .mapGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 28px;
 }
 .mapCard {
   position: relative;
   border: 2px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
-  transition: border-color 0.2s, transform 0.1s;
-  aspect-ratio: 16/10;
+  transition: border-color 0.25s, transform 0.15s, box-shadow 0.25s;
+  aspect-ratio: 3/4;
   background: var(--bg3);
 }
-.mapCard:hover { border-color: var(--accent); transform: translateY(-1px); }
+.mapCard:hover {
+  border-color: var(--accent);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
 .mapBanned {
   border-color: var(--loss) !important;
+  box-shadow: 0 0 16px rgba(224,92,58,0.2) !important;
 }
-.mapBanned .mapImg { filter: grayscale(0.8) brightness(0.4); }
+.mapBanned .mapImg {
+  filter: grayscale(0.85) brightness(0.35);
+}
+.mapBanned .mapOverlay {
+  background: linear-gradient(to top, rgba(224,92,58,0.3) 0%, rgba(0,0,0,0.2) 40%, transparent 70%);
+}
 .mapImg {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: filter 0.2s;
+  transition: filter 0.25s, transform 0.3s;
+}
+.mapCard:hover .mapImg {
+  transform: scale(1.04);
 }
 .mapOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%);
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.15) 45%, transparent 70%);
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  padding: 8px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 14px 10px;
+  gap: 4px;
 }
 .mapName {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-}
-.mapBanIcon {
-  color: var(--loss);
   font-size: 16px;
   font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.mapBanIcon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--loss);
+  font-size: 36px;
+  font-weight: 700;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+}
+.mapCheck {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: 2px solid rgba(255,255,255,0.3);
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: transparent;
+  transition: all 0.2s;
+}
+.mapBanned .mapCheck {
+  border-color: var(--loss);
+  background: var(--loss);
+  color: #fff;
 }
 
 /* ── Launch ── */
@@ -277,13 +320,20 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Responsive ── */
+@media (max-width: 700px) {
+  .mapGrid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .mapName { font-size: 14px; }
+}
+
 @media (max-width: 600px) {
   .wizard { padding: 20px 12px 60px; }
   .stepCard { padding: 20px; }
   .progress { gap: 20px; }
   .progressLabel { display: none; }
   .teamGrid { grid-template-columns: 1fr; }
-  .mapGrid { grid-template-columns: repeat(3, 1fr); }
+  .mapGrid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .mapName { font-size: 13px; }
+  .mapBanIcon { font-size: 28px; }
   .inputRow { flex-direction: column; }
   .btn { width: 100%; justify-content: center; }
   .launchRow { flex-direction: column-reverse; gap: 12px; }

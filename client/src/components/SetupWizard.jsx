@@ -159,9 +159,10 @@ export default function SetupWizard({ onComplete, onBack }) {
                     alt={map}
                     onError={e => e.target.style.display = 'none'}
                   />
+                  <div className={styles.mapCheck}>{banned ? '✕' : ''}</div>
+                  {banned && <span className={styles.mapBanIcon}>✕</span>}
                   <div className={styles.mapOverlay}>
                     <span className={styles.mapName}>{map}</span>
-                    {banned && <span className={styles.mapBanIcon}>✕</span>}
                   </div>
                 </button>
               );
