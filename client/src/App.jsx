@@ -88,7 +88,7 @@ export default function App() {
   }
 
   // Wizard flow
-  if (view === 'wizard' && !result && !loading) {
+  if (view === 'wizard' && !loading) {
     return (
       <div className={styles.app}>
         <div className={styles.scanlines} aria-hidden="true" />
