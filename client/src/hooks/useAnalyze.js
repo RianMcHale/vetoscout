@@ -231,10 +231,17 @@ export function useAnalyze() {
               const setup = setupByPid[rich.pid] || {};
               return {
                 ...rich,
+                // Always preserve these from /api/setup (open API — reliable)
                 role: setup.role || rich.role,
                 trait: setup.trait || rich.trait,
                 sniperKR: setup.sniperKR ?? rich.sniperKR,
                 teamRole: setup.teamRole || rich.teamRole || null,
+                matches: setup.matches || rich.matches,
+                kd: setup.kd ?? rich.kd,
+                adr: setup.adr ?? rich.adr,
+                hs: setup.hs || rich.hs,
+                hsRaw: setup.hsRaw ?? rich.hsRaw,
+                winRate: setup.winRate ?? rich.winRate,
               };
             });
             console.log(`[playerStats] merged internal stats for ${finalPlayers.length} players`);
