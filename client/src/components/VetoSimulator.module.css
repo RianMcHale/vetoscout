@@ -1,76 +1,43 @@
 .wrap { display: flex; flex-direction: column; gap: 16px; }
 
-/* Controls */
 .controls {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-  padding: 14px 18px;
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  padding: 14px 18px; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: var(--radius-lg);
 }
 .controlGroup { display: flex; align-items: center; gap: 8px; }
 .controlLabel {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text3);
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3);
 }
 .btnGroup { display: flex; gap: 4px; }
 .btn {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  padding: 5px 12px;
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text2);
-  cursor: pointer;
-  transition: all 0.15s;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 5px;
+  padding: 5px 12px; font-family: 'Rajdhani', sans-serif; font-size: 13px;
+  font-weight: 600; color: var(--text2); cursor: pointer; transition: all 0.15s;
 }
 .btn:hover { border-color: var(--border2); color: var(--text); }
 .btnActive { background: var(--accent); color: #000; border-color: var(--accent); }
 .btnUndo, .btnReset {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  padding: 5px 12px;
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text2);
-  cursor: pointer;
-  transition: all 0.15s;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 5px;
+  padding: 5px 12px; font-family: 'Rajdhani', sans-serif; font-size: 13px;
+  font-weight: 600; color: var(--text2); cursor: pointer; transition: all 0.15s;
 }
 .btnUndo:hover:not(:disabled), .btnReset:hover:not(:disabled) { border-color: var(--border2); color: var(--text); }
 .btnUndo:disabled, .btnReset:disabled { opacity: 0.3; cursor: not-allowed; }
 
 /* Sequence strip */
 .sequenceStrip {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding: 12px 16px;
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  display: flex; gap: 6px; overflow-x: auto; padding: 12px 16px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  scrollbar-width: none;
 }
+.sequenceStrip::-webkit-scrollbar { display: none; }
 .seqStep {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  min-width: 60px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  opacity: 0.5;
-  transition: all 0.2s;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  min-width: 60px; padding: 6px 8px; border-radius: 6px;
+  background: var(--bg3); border: 1px solid var(--border);
+  opacity: 0.5; transition: all 0.2s;
 }
 .seqActive { opacity: 1; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .seqDone { opacity: 1; }
@@ -81,103 +48,106 @@
 
 /* Prompt */
 .prompt {
-  padding: 12px 16px;
-  background: var(--bg2);
-  border: 1px solid;
-  border-radius: var(--radius-lg);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
-  color: var(--text2);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  padding: 12px 16px; background: var(--bg2); border: 1px solid;
+  border-radius: var(--radius-lg); font-family: 'DM Sans', sans-serif;
+  font-size: 14px; color: var(--text2);
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
 }
 .suggestion {
-  margin-left: 8px;
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  color: var(--text3);
+  margin-left: 8px; font-family: 'DM Mono', monospace;
+  font-size: 11px; color: var(--text3);
 }
 
 /* Map grid */
 .mapGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
 }
 
-/* Map tile */
+/* Map tile — image-based card */
 .tile {
   position: relative;
-  background: var(--bg2);
+  width: calc(25% - 10px);
+  min-width: 150px;
+  aspect-ratio: 3/4;
   border: 2px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 14px;
-  cursor: pointer;
-  transition: all 0.15s;
+  border-radius: 10px;
   overflow: hidden;
-  min-height: 120px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+  flex-shrink: 0;
 }
-.tile:hover:not(.tileBanned) { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-.tileBanned { cursor: default; opacity: 0.4; }
-.tilePicked { border-width: 2px; }
+.tile:hover:not(.tileBanned) {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.tileBanned { cursor: default; }
+.tilePicked { }
 .tileNext { cursor: pointer; }
-.tileNext:hover { opacity: 0.85; }
+.tileNext:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
 
-.tileMapColor {
-  position: absolute;
-  top: 0; left: 0;
-  width: 4px;
-  height: 100%;
-  border-radius: 4px 0 0 4px;
+/* Background image */
+.tileImg {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  transition: opacity 0.2s;
+}
+
+/* Content on top */
+.tileContent {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column;
+  height: 100%; padding: 12px;
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.1) 100%);
+  justify-content: flex-end; gap: 8px;
 }
 
 .tileName {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text);
-  padding-left: 10px;
+  font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700;
+  color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  text-transform: uppercase; letter-spacing: 0.03em;
 }
 
-.tileRates {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding-left: 10px;
+/* Win rate rows */
+.tileRates { display: flex; flex-direction: column; gap: 6px; }
+.rateRow { display: flex; flex-direction: column; gap: 2px; }
+.rateLabel {
+  font-family: 'DM Mono', monospace; font-size: 9px;
+  letter-spacing: 0.04em; text-transform: uppercase;
 }
-.rateRow { display: flex; align-items: center; gap: 6px; }
-.rateTeam { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text3); width: 24px; }
-.rateBar { flex: 1; height: 4px; background: var(--bg4); border-radius: 2px; overflow: hidden; }
-.rateFill { height: 100%; border-radius: 2px; }
-.ratePct { font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 600; width: 32px; text-align: right; }
+.rateBarWrap { display: flex; align-items: center; gap: 6px; }
+.rateBar {
+  flex: 1; height: 5px; background: rgba(255,255,255,0.1);
+  border-radius: 3px; overflow: hidden;
+}
+.rateFill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+.ratePct {
+  font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700;
+  min-width: 36px; text-align: right;
+}
 
+/* Status badge */
 .statusBadge {
   align-self: flex-start;
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 4px;
-  margin-left: 10px;
+  font-family: 'Rajdhani', sans-serif; font-size: 11px; font-weight: 700;
+  padding: 3px 10px; border-radius: 4px; border: 1px solid;
+  letter-spacing: 0.05em;
 }
 
 .nextHint {
-  font-family: 'DM Mono', monospace;
-  font-size: 9px;
-  color: var(--text3);
-  padding-left: 10px;
+  font-family: 'DM Mono', monospace; font-size: 9px;
   margin-top: auto;
 }
 
-@media (max-width: 600px) {
-  .mapGrid { grid-template-columns: 1fr 1fr !important; gap: 8px; }
-  .flowRow { flex-wrap: wrap; gap: 4px; }
-  .flowSlot { min-width: 48px; padding: 6px 4px; font-size: 9px; }
-  .controls { flex-wrap: wrap; gap: 6px; }
-  .card { padding: 12px; }
+@media (max-width: 700px) {
+  .tile { width: calc(33.33% - 10px); min-width: 120px; }
+  .tileName { font-size: 16px; }
+  .rateLabel { font-size: 8px; }
+  .ratePct { font-size: 11px; }
+}
+
+@media (max-width: 500px) {
+  .tile { width: calc(50% - 8px); min-width: 100px; }
+  .controls { gap: 8px; }
+  .sequenceStrip { padding: 8px 10px; }
+  .seqStep { min-width: 50px; padding: 4px 6px; }
 }
