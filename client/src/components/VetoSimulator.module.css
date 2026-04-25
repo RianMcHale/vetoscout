@@ -66,9 +66,9 @@
 /* Map tile — image-based card */
 .tile {
   position: relative;
-  width: calc(25% - 10px);
-  min-width: 150px;
-  aspect-ratio: 3/4;
+  width: calc(14.28% - 10px);
+  min-width: 110px;
+  aspect-ratio: 2/3;
   border: 2px solid var(--border);
   border-radius: 10px;
   overflow: hidden;
@@ -96,19 +96,19 @@
 .tileContent {
   position: relative; z-index: 1;
   display: flex; flex-direction: column;
-  height: 100%; padding: 12px;
+  height: 100%; padding: 8px;
   background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.1) 100%);
   justify-content: flex-end; gap: 8px;
 }
 
 .tileName {
-  font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700;
+  font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 700;
   color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,0.5);
   text-transform: uppercase; letter-spacing: 0.03em;
 }
 
 /* Win rate rows */
-.tileRates { display: flex; flex-direction: column; gap: 6px; }
+.tileRates { display: flex; flex-direction: column; gap: 4px; }
 .rateRow { display: flex; flex-direction: column; gap: 2px; }
 .rateLabel {
   font-family: 'DM Mono', monospace; font-size: 9px;
@@ -116,13 +116,13 @@
 }
 .rateBarWrap { display: flex; align-items: center; gap: 6px; }
 .rateBar {
-  flex: 1; height: 5px; background: rgba(255,255,255,0.1);
+  flex: 1; height: 3px; background: rgba(255,255,255,0.1);
   border-radius: 3px; overflow: hidden;
 }
 .rateFill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
 .ratePct {
-  font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700;
-  min-width: 36px; text-align: right;
+  font-family: 'Rajdhani', sans-serif; font-size: 11px; font-weight: 700;
+  min-width: 30px; text-align: right;
 }
 
 /* Status badge */
@@ -139,14 +139,14 @@
 }
 
 @media (max-width: 700px) {
-  .tile { width: calc(33.33% - 10px); min-width: 120px; }
-  .tileName { font-size: 16px; }
+  .tile { width: calc(25% - 8px); min-width: 100px; }
+  .tileName { font-size: 13px; }
   .rateLabel { font-size: 8px; }
   .ratePct { font-size: 11px; }
 }
 
 @media (max-width: 500px) {
-  .tile { width: calc(50% - 8px); min-width: 100px; }
+  .tile { width: calc(33.33% - 6px); min-width: 90px; }
   .controls { gap: 8px; }
   .sequenceStrip { padding: 8px 10px; }
   .seqStep { min-width: 50px; padding: 4px 6px; }
