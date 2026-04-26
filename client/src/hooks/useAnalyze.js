@@ -3,9 +3,9 @@ import axios from 'axios';
 
 const MAP_ALIASES = {
   de_mirage:'Mirage', de_inferno:'Inferno', de_nuke:'Nuke', de_ancient:'Ancient',
-  de_anubis:'Anubis', de_dust2:'Dust2', de_overpass:'Overpass', de_train:'Train', de_vertigo:'Vertigo',
+  de_anubis:'Anubis', de_dust2:'Dust2', de_overpass:'Overpass',
 };
-const MAPS = ['Mirage','Inferno','Nuke','Ancient','Anubis','Dust2','Overpass','Train','Vertigo'];
+const MAPS = ['Mirage','Inferno','Nuke','Ancient','Anubis','Dust2','Overpass'];
 
 function normalizeMap(raw) {
   if (!raw) return null;
