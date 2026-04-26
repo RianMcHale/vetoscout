@@ -1540,9 +1540,8 @@ app.get('/api/auth/faceit', (req, res) => {
     redirect_uri: FACEIT_REDIRECT_URI,
     scope: 'openid profile',
     state,
-    redirect_popup: 'true',
   });
-  res.redirect(`https://cdn.faceit.com/widgets/sso/index.html?${params.toString()}`);
+  res.redirect(`https://accounts.faceit.com?${params.toString()}`);
 });
 
 // Step 2: Handle callback — exchange code for token
