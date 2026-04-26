@@ -82,12 +82,12 @@ const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 20 });
 const faceitClient = axios.create({ baseURL: FACEIT_BASE, httpsAgent, timeout: 15000 });
 
 const ACTIVE_MAP_POOL = ['Mirage', 'Inferno', 'Dust2', 'Nuke', 'Ancient', 'Anubis', 'Overpass'];
-const MAPS = ['Mirage','Inferno','Nuke','Ancient','Anubis','Dust2','Overpass','Train','Vertigo'];
+const MAPS = ['Mirage','Inferno','Nuke','Ancient','Anubis','Dust2','Overpass'];
 const MAP_ALIASES = {
   de_mirage:'Mirage', de_inferno:'Inferno', de_nuke:'Nuke', de_ancient:'Ancient',
-  de_anubis:'Anubis', de_dust2:'Dust2', de_overpass:'Overpass', de_train:'Train', de_vertigo:'Vertigo',
+  de_anubis:'Anubis', de_dust2:'Dust2', de_overpass:'Overpass',
   mirage:'Mirage', inferno:'Inferno', nuke:'Nuke', ancient:'Ancient',
-  anubis:'Anubis', dust2:'Dust2', overpass:'Overpass', train:'Train', vertigo:'Vertigo',
+  anubis:'Anubis', dust2:'Dust2', overpass:'Overpass'
 };
 
 const HISTORY_LIMIT = 200;
