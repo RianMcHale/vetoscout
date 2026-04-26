@@ -1,4 +1,4 @@
-export const MAPS = ['Mirage','Inferno','Nuke','Ancient','Anubis','Dust2','Overpass','Train','Vertigo'];
+export const MAPS = ['Mirage','Inferno','Nuke','Ancient','Anubis','Dust2','Overpass'];
 
 export const ACTIVE_MAP_POOL = ['Mirage','Inferno','Dust2','Nuke','Ancient','Anubis','Overpass'];
 
@@ -10,8 +10,8 @@ export const MAP_COLORS = {
   Anubis:   '#4a9eff',
   Dust2:    '#e84b9c',
   Overpass: '#7ecb6a',
-  Train:    '#888899',
-  Vertigo:  '#c1a05e',
+  // Train:    '#888899',
+  // Vertigo:  '#c1a05e',
 };
 
 /**
