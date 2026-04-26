@@ -25,7 +25,7 @@ async function fetchLeagueMatchIds(playerIds) {
   for (const pid of playerIds.slice(0, 3)) {
     try {
       const resp = await fetch(
-        `/api/match-rounds-proxy/${pid}?limit=200&cookie=${encodeURIComponent(cookie)}`,
+        `/api/match-rounds-proxy/${pid}?limit=200`,
         { headers: { 'Accept': 'application/json' } }
       );
       if (!resp.ok) continue;
@@ -76,8 +76,8 @@ async function fetchVetoForMatch(matchId, oppFactionKey) {
 async function fetchInternalStats(matchId) {
   try {
     const cookie = typeof document !== 'undefined' ? document.cookie : '';
-    const resp = await fetch(`/api/stats-proxy/${matchId}?cookie=${encodeURIComponent(cookie)}`, {
-      headers: { 'Accept': 'application/json' },
+    const resp = await fetch(`/api/stats-proxy/${matchId}`, {
+      headers: { 'Accept': 'application/json', 'X-Faceit-Cookie': cookie },
     });
     if (!resp.ok) return null;
     const data = await resp.json();

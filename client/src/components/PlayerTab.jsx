@@ -1,3 +1,4 @@
+import { ACTIVE_MAP_POOL } from '../lib/maps';
 import styles from './PlayerTab.module.css';
 
 const ROLE_COLORS = {
@@ -11,7 +12,6 @@ const ROLE_COLORS = {
 
 const LEVEL_COLORS = ['','#eee','#3cdc64','#3cdc64','#3cdc64','#f0aa3c','#f0aa3c','#f0aa3c','#e05c3a','#e05c3a','#9b7fe8'];
 
-const ACTIVE_POOL = ['Mirage','Inferno','Dust2','Nuke','Ancient','Anubis','Overpass'];
 
 function calcThreat(p) {
   const kd       = parseFloat(p.kd        || 0);
@@ -181,7 +181,7 @@ function PlayerCard({ player }) {
         <div className={styles.mapStats}>
           <div className={styles.mapStatsLabel}>Performance by map</div>
           <div className={styles.mapStatsGrid}>
-            {ACTIVE_POOL.filter(m => player.byMap[m]).map(m => {
+            {ACTIVE_MAP_POOL.filter(m => player.byMap[m]).map(m => {
               const bm = player.byMap[m];
               return (
                 <div key={m} className={styles.mapStatCell}>

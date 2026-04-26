@@ -29,7 +29,6 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 
-require('events').EventEmitter.defaultMaxListeners = 30;
 
 const app = express();
 app.set('trust proxy', 1); // Railway runs behind a proxy
@@ -203,29 +202,7 @@ function buildRecommendation(playCounts, winCounts, banCounts, excludeMaps, acti
 
 
 // Proxy FACEIT democracy API — browser can't call it cross-origin from localhost
-app.get('/api/democracy/:matchId', async (req, res) => {
-  const { matchId } = req.params;
-  const cookie = req.headers.cookie || '';
-  try {
-    const { data } = await axios.get(
-      `https://www.faceit.com/api/democracy/v1/match/${matchId}/history`,
-      {
-        httpsAgent,
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': req.headers['user-agent'] || 'Mozilla/5.0',
-          'Referer': `https://www.faceit.com/en/cs2/room/${matchId}`,
-          'faceit-referer': 'web-next',
-          ...(cookie ? { Cookie: cookie } : {}),
-        },
-        timeout: 10000,
-      }
-    );
-    res.json(data);
-  } catch (err) {
-    res.status(err.response?.status || 502).json({ error: err.response?.data || err.message });
-  }
-});
+
 
 /**
  * Step 1: Fetch match room + opponent history.
@@ -792,7 +769,6 @@ app.get('/api/setup', async (req, res) => {
     for (const r of matchStatsResults) {
       if (r.status !== 'fulfilled' || !r.value?.rounds) continue;
       const statsMatchId = r.value._matchId || r.value.match_id || r.value.matchId || r.value.id || '';
-      if (!statsMatchId) console.log('[stats] WARNING: no match_id on stats result, keys:', Object.keys(r.value).join(','));
       for (const round of r.value.rounds) {
         for (const team of (round.teams || [])) {
           for (const player of (team.players || [])) {
@@ -853,14 +829,19 @@ app.get('/api/setup', async (req, res) => {
             // Per-map accumulation — round.round_stats.Map gives the map name
             const roundMap = normalizeMap(round.round_stats?.Map || round.round_stats?.map || '');
             if (roundMap) {
-              if (!acc.byMap[roundMap]) acc.byMap[roundMap] = { matchCount: 0, kd: 0, adr: 0, kills: 0, deaths: 0, wins: 0 };
+              if (!acc.byMap[roundMap]) acc.byMap[roundMap] = { matchCount: 0, roundCount: 0, matchIds: new Set(), kd: 0, adr: 0, kills: 0, deaths: 0, wins: 0 };
               const bm = acc.byMap[roundMap];
-              bm.matchCount++;
+              bm.roundCount++;
               bm.kd    += toN(s['K/D Ratio']);
               bm.adr   += toN(s['ADR']);
               bm.kills += toN(s['Kills']);
               bm.deaths += toN(s['Deaths']);
-              bm.wins  += toN(s['Result']);
+              // Count match + win only once per unique match on this map
+              if (!bm.matchIds.has(statsMatchId)) {
+                bm.matchIds.add(statsMatchId);
+                bm.matchCount++;
+                bm.wins += toN(s['Result']);
+              }
             }
           }
         }
@@ -922,10 +903,11 @@ app.get('/api/setup', async (req, res) => {
         const byMap = {};
         for (const [map, bm] of Object.entries(acc.byMap || {})) {
           if (bm.matchCount > 0) {
+            const bmN = bm.roundCount || bm.matchCount;
             byMap[map] = {
               matches: bm.matchCount,
-              kd:  Math.round((bm.kd  / bm.matchCount) * 100) / 100,
-              adr: Math.round(bm.adr  / bm.matchCount),
+              kd:  Math.round((bm.kd  / bmN) * 100) / 100,
+              adr: Math.round(bm.adr  / bmN),
               wr:  Math.round((bm.wins / bm.matchCount) * 100),
             };
           }
@@ -1244,7 +1226,7 @@ app.post('/api/stats', (req, res) => {
 // GET /api/stats-proxy/:matchId — returns per-map per-player stats with KAST etc.
 app.get('/api/stats-proxy/:matchId', async (req, res) => {
   const { matchId } = req.params;
-  const cookie = req.query.cookie || req.headers['x-faceit-cookie'] || req.headers.cookie || '';
+  const cookie = req.headers['x-faceit-cookie'] || req.headers.cookie || '';
   try {
     const { data } = await axios.get(
       `https://www.faceit.com/api/stats/v3/matches/${matchId}`,
@@ -1491,7 +1473,7 @@ app.post('/api/player-stats', async (req, res) => {
 // GET /api/match-rounds-proxy/:playerId
 app.get('/api/match-rounds-proxy/:playerId', async (req, res) => {
   const { playerId } = req.params;
-  const cookie = req.query.cookie || req.headers['x-faceit-cookie'] || req.headers.cookie || '';
+  const cookie = req.headers['x-faceit-cookie'] || req.headers.cookie || '';
   const limit = req.query.limit || 100;
   try {
     const { data } = await axios.get(
@@ -1523,9 +1505,9 @@ app.get('/api/match-rounds-proxy/:playerId', async (req, res) => {
 
 
 // ── FACEIT OAuth2 (FACEIT Connect) ───────────────────────────────────────
-const FACEIT_CLIENT_ID     = process.env.FACEIT_CLIENT_ID || '2efe57f0-9c9a-4919-b2bb-e016d6134ce1';
+const FACEIT_CLIENT_ID     = process.env.FACEIT_CLIENT_ID || '';
 const FACEIT_CLIENT_SECRET = process.env.FACEIT_CLIENT_SECRET || '';
-const FACEIT_REDIRECT_URI  = process.env.FACEIT_REDIRECT_URI || 'https://www.vetoscout.com/api/auth/callback';
+const FACEIT_REDIRECT_URI  = process.env.FACEIT_REDIRECT_URI || 'https://vetoscout.com/api/auth/callback';
 
 // Step 1: Redirect user to FACEIT login
 app.get('/api/auth/faceit', (req, res) => {
@@ -1638,64 +1620,7 @@ app.get('/api/auth/scheduled', async (req, res) => {
   }
 });
 
-// ── Upcoming matches (uses FACEIT internal match API — no auth required) ────
-app.get('/api/upcoming/:teamId', async (req, res) => {
-  const { teamId } = req.params;
-  try {
-    // Get team roster to find a player ID
-    const { data: leagueData } = await axios.get(
-      `https://www.faceit.com/api/team-leagues/v1/teams/${teamId}/profile/leagues/summary`,
-      { httpsAgent, headers: { 'Accept': 'application/json', 'faceit-referer': 'web-next' }, timeout: 8000 }
-    );
-    const members = leagueData?.payload?.[0]?.active_members || [];
-    if (members.length === 0) return res.json({ matches: [] });
 
-    // Try each player until we get scheduled matches
-    let scheduled = [];
-    for (const member of members.slice(0, 3)) {
-      try {
-        const { data } = await axios.get(
-          `https://www.faceit.com/api/match/v1/matches/groupByState?userId=${member.user_id}`,
-          { httpsAgent, headers: { 'Accept': 'application/json', 'faceit-referer': 'web-next' }, timeout: 8000 }
-        );
-        const matches = data?.payload?.SCHEDULED || [];
-        // Filter to matches involving this team
-        const teamMatches = matches.filter(m => {
-          const f1id = m.teams?.faction1?.id;
-          const f2id = m.teams?.faction2?.id;
-          return f1id === teamId || f2id === teamId;
-        });
-        if (teamMatches.length > 0) {
-          scheduled = teamMatches;
-          break;
-        }
-      } catch (_) {}
-    }
-
-    const result = scheduled.map(m => {
-      const isF1 = m.teams?.faction1?.id === teamId;
-      const opp = isF1 ? m.teams?.faction2 : m.teams?.faction1;
-      return {
-        matchId: m.id,
-        matchUrl: `https://www.faceit.com/en/cs2/room/${m.id}`,
-        schedule: m.schedule,
-        competition: m.entity?.name || '',
-        round: m.entityCustom?.round || null,
-        opponent: {
-          name: opp?.name || '?',
-          avatar: opp?.avatar || null,
-          roster: (opp?.roster || []).map(p => ({ nickname: p.nickname, avatar: p.avatar })),
-        },
-        state: m.state,
-      };
-    }).sort((a, b) => new Date(a.schedule) - new Date(b.schedule));
-
-    res.json({ matches: result });
-  } catch (e) {
-    console.log('[upcoming] failed:', e.message);
-    res.json({ matches: [] });
-  }
-});
 
 // ── Health check for Railway ─────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
@@ -1709,6 +1634,15 @@ app.use(express.static(clientDist));
 app.get('/{*splat}', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
   res.sendFile(path.join(clientDist, 'index.html'));
+});
+
+// ── Graceful error handling ──────────────────────────────────────────────
+process.on('unhandledRejection', (err) => {
+  console.error('[fatal] Unhandled rejection:', err?.message || err);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[fatal] Uncaught exception:', err?.message || err);
+  process.exit(1);
 });
 
 app.listen(PORT, () => console.log(`VetoScout server running on http://localhost:${PORT}`))

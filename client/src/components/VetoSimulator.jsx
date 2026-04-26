@@ -1,18 +1,8 @@
 import { useState, useMemo } from 'react';
-import { MAP_COLORS, winRateColor } from '../lib/maps';
+import { MAP_COLORS, winRateColor, ACTIVE_MAP_POOL, MAP_IMAGES } from '../lib/maps';
 import styles from './VetoSimulator.module.css';
 
-const ACTIVE_POOL = ['Mirage','Inferno','Dust2','Nuke','Ancient','Anubis','Overpass'];
 
-const MAP_IMAGES = {
-  Mirage:   'https://assets.faceit-cdn.net/third_party/games/ce652bd4-0abb-4c90-9936-1133965ca38b/assets/votables/7fb7d725-e44d-4e3c-b557-e1d19b260ab8_1695819144685.jpeg',
-  Inferno:  'https://assets.faceit-cdn.net/third_party/games/ce652bd4-0abb-4c90-9936-1133965ca38b/assets/votables/993380de-bb5b-4aa1-ada9-a0c1741dc475_1695819220797.jpeg',
-  Dust2:    'https://assets.faceit-cdn.net/third_party/games/ce652bd4-0abb-4c90-9936-1133965ca38b/assets/votables/7c17caa9-64a6-4496-8a0b-885e0f038d79_1695819126962.jpeg',
-  Nuke:     'https://assets.faceit-cdn.net/third_party/games/ce652bd4-0abb-4c90-9936-1133965ca38b/assets/votables/7197a969-81e4-4fef-8764-55f46c7cec6e_1695819158849.jpeg',
-  Ancient:  'https://assets.faceit-cdn.net/third_party/games/ce652bd4-0abb-4c90-9936-1133965ca38b/assets/votables/5b844241-5b15-45bf-a304-ad6df63b5ce5_1695819190976.jpeg',
-  Anubis:   'https://assets.faceit-cdn.net/third_party/games/ce652bd4-0abb-4c90-9936-1133965ca38b/assets/votables/31f01daf-e531-43cf-b949-c094ebc9b3ea_1695819235255.jpeg',
-  Overpass: 'https://assets.faceit-cdn.net/third_party/games/ce652bd4-0abb-4c90-9936-1133965ca38b/assets/votables/058c4eb3-dac4-441c-a810-70afa0f3022c_1695819170133.jpeg',
-};
 
 const BO1_SEQUENCE = [
   { team: 'them', action: 'ban',  label: '1st Ban'  },
@@ -125,7 +115,7 @@ export default function VetoSimulator({ stats, poolMaps, myTeamStats }) {
     return base;
   }, [format, startTeam]);
 
-  const availableMaps = ACTIVE_POOL.filter(m => poolMaps.includes(m));
+  const availableMaps = ACTIVE_MAP_POOL.filter(m => poolMaps.includes(m));
 
   const computed = useMemo(() => {
     const states = {};
