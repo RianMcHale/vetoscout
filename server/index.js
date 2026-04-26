@@ -330,6 +330,27 @@ function assignRoles(playerScoresList) {
 }
 
 // ── Quick match room info (returns both teams for selection) ─────────────
+// ── Democracy (veto) data proxy ──────────────────────────────────────────
+app.get('/api/democracy/:matchId', async (req, res) => {
+  const { matchId } = req.params;
+  try {
+    const { data } = await axios.get(
+      `https://www.faceit.com/api/democracy/v1/match/${matchId}/history`,
+      {
+        httpsAgent,
+        headers: {
+          'Accept': 'application/json',
+          'faceit-referer': 'web-next',
+        },
+        timeout: 10000,
+      }
+    );
+    res.json(data);
+  } catch (err) {
+    res.status(err.response?.status || 502).json({ error: err.response?.data || err.message });
+  }
+});
+
 app.get('/api/match-info', async (req, res) => {
   const matchInput = (req.query.matchInput || '').trim();
   if (!matchInput) return res.status(400).json({ error: 'matchInput is required.' });
