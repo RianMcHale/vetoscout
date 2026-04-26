@@ -1511,6 +1511,7 @@ const FACEIT_REDIRECT_URI  = process.env.FACEIT_REDIRECT_URI || 'https://vetosco
 
 // Step 1: Redirect user to FACEIT login
 app.get('/api/auth/faceit', (req, res) => {
+  if (!FACEIT_CLIENT_ID) return res.status(500).send('FACEIT OAuth not configured.');
   const state = require('crypto').randomBytes(16).toString('hex');
   const params = new URLSearchParams({
     response_type: 'code',
@@ -1518,8 +1519,9 @@ app.get('/api/auth/faceit', (req, res) => {
     redirect_uri: FACEIT_REDIRECT_URI,
     scope: 'openid profile',
     state,
+    redirect_popup: 'true',
   });
-  res.redirect(`https://accounts.faceit.com/accounts?${params.toString()}`);
+  res.redirect(`https://cdn.faceit.com/widgets/sso/index.html?${params.toString()}`);
 });
 
 // Step 2: Handle callback — exchange code for token
