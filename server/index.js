@@ -1203,11 +1203,13 @@ app.post('/api/stats', (req, res) => {
   const sortedBans     = Object.entries(banCounts).sort((a, b) => b[1] - a[1]);
   const sortedPlayed   = Object.entries(playCounts).sort((a, b) => b[1] - a[1]);
   const mapsWithSample = [...allMaps].filter(m => (playCounts[m] || 0) >= 3);
+  const mapsWithAnyGame = [...allMaps].filter(m => (playCounts[m] || 0) >= 1);
+  const mapPool = mapsWithSample.length >= 2 ? mapsWithSample : mapsWithAnyGame;
 
   const mostBanned = sortedBans[0]?.[0]   || null;
   const mostPlayed = sortedPlayed[0]?.[0] || null;
-  const bestMap    = [...mapsWithSample].sort((a, b) => adjWinRates[b] - adjWinRates[a])[0] || null;
-  const worstMap   = [...mapsWithSample].sort((a, b) => adjWinRates[a] - adjWinRates[b])[0] || null;
+  const bestMap    = [...mapPool].sort((a, b) => adjWinRates[b] - adjWinRates[a])[0] || null;
+  const worstMap   = [...mapPool].sort((a, b) => adjWinRates[a] - adjWinRates[b])[0] || null;
 
   // Pass myPermaBans so recommendation avoids suggesting maps we already plan to ban
   const recommendation = buildRecommendation(playCounts, winCounts, banCounts,
