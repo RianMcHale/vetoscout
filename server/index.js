@@ -812,9 +812,9 @@ app.get('/api/setup', async (req, res) => {
       }
     }
 
-    // Fetch match stats for up to 30 core matches
+    // Fetch match stats for core matches
     const matchStatsResults = await Promise.allSettled(
-      coreDetails.slice(0, 30).map(async m => {
+      coreDetails.slice(0, MATCH_LIMIT).map(async m => {
         const mid = m.match_id || m.matchId || m.id;
         const ck = `stats:${mid}`;
         const cached = await rGet(ck);
@@ -913,9 +913,9 @@ app.get('/api/setup', async (req, res) => {
     }
 
 
-    // roundCount = total map entries processed (BO3 = 2-3 per match)
+    // roundCount = total map entries (BO3 = 2-3 per match)
     // matchCount = unique matches (what the user sees as "games")
-    // Stats are accumulated per round entry, so average by roundCount
+    // Stats accumulate per round entry, so average by roundCount
     const avg = (acc, key) => acc.roundCount > 0 ? acc[key] / acc.roundCount : 0;
 
     // Build player objects
