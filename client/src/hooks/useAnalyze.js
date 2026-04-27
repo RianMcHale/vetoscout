@@ -3,9 +3,9 @@ import axios from 'axios';
 
 const MAP_ALIASES = {
   de_mirage:'Mirage', de_inferno:'Inferno', de_nuke:'Nuke', de_ancient:'Ancient',
-  de_anubis:'Anubis', de_dust2:'Dust2', de_overpass:'Overpass',
+  de_anubis:'Anubis', de_dust2:'Dust2', de_overpass:'Overpass', de_train:'Train', de_vertigo:'Vertigo',
 };
-const MAPS = ['Mirage','Inferno','Nuke','Ancient','Anubis','Dust2','Overpass'];
+const MAPS = ['Mirage','Inferno','Nuke','Ancient','Anubis','Dust2','Overpass','Train','Vertigo'];
 
 function normalizeMap(raw) {
   if (!raw) return null;
@@ -231,17 +231,27 @@ export function useAnalyze() {
               const setup = setupByPid[rich.pid] || {};
               return {
                 ...rich,
-                // Always preserve these from /api/setup (open API — reliable)
+                // Always preserve ALL stats from /api/setup (open API — reliable, correct averaging)
+                // Internal API (/api/player-stats) provides byMap and enriched fields only
                 role: setup.role || rich.role,
                 trait: setup.trait || rich.trait,
                 sniperKR: setup.sniperKR ?? rich.sniperKR,
                 teamRole: setup.teamRole || rich.teamRole || null,
-                matches: setup.matches || rich.matches,
+                matches: setup.matches ?? rich.matches,
                 kd: setup.kd ?? rich.kd,
                 adr: setup.adr ?? rich.adr,
                 hs: setup.hs || rich.hs,
                 hsRaw: setup.hsRaw ?? rich.hsRaw,
                 winRate: setup.winRate ?? rich.winRate,
+                entryRate: setup.entryRate ?? rich.entryRate,
+                entrySR: setup.entrySR ?? rich.entrySR,
+                firstKills: setup.firstKills ?? rich.firstKills,
+                clutch1v1: setup.clutch1v1 ?? rich.clutch1v1,
+                clutch1v2: setup.clutch1v2 ?? rich.clutch1v2,
+                flashSR: setup.flashSR ?? rich.flashSR,
+                utilDmg: setup.utilDmg ?? rich.utilDmg,
+                assists: setup.assists ?? rich.assists,
+                byMap: setup.byMap && Object.keys(setup.byMap).length > 0 ? setup.byMap : rich.byMap,
               };
             });
             console.log(`[playerStats] merged internal stats for ${finalPlayers.length} players`);
