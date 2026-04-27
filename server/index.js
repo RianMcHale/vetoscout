@@ -971,6 +971,7 @@ app.get('/api/setup', async (req, res) => {
         const level    = profile.games?.cs2?.skill_level || null;
         const elo      = profile.games?.cs2?.faceit_elo  || null;
         const matches  = acc.matchCount;
+        console.log(`[player] ${nickname}: matchCount=${acc.matchCount} roundCount=${acc.roundCount} ratio=${acc.matchCount > 0 ? (acc.roundCount/acc.matchCount).toFixed(1) : 'N/A'} entryRateSum=${acc.entryRate?.toFixed(3)} flashSRSum=${acc.flashSR?.toFixed(3)} entryCountSum=${acc.entryCount} entryWinsSum=${acc.entryWins} flashCountSum=${acc.flashCount} flashSuccSum=${acc.flashSuccesses} killsSum=${acc.kills} deathsSum=${acc.deaths}`);
 
         // Averaged stats
         const kd        = acc.deaths > 0 ? Math.round((acc.kills / acc.deaths) * 100) / 100 : acc.kills;
