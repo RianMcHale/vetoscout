@@ -973,7 +973,7 @@ app.get('/api/setup', async (req, res) => {
         const matches  = acc.matchCount;
 
         // Averaged stats
-        const kd        = avg(acc, 'kd');
+        const kd        = acc.deaths > 0 ? Math.round((acc.kills / acc.deaths) * 100) / 100 : acc.kills;
         const hs        = avg(acc, 'hsPercent');
         const adr       = avg(acc, 'adr');
         const winRate   = matches > 0 ? (acc.wins / matches) * 100 : 0;
@@ -1010,8 +1010,8 @@ app.get('/api/setup', async (req, res) => {
             const bmN = bm.roundCount || bm.matchCount;
             byMap[map] = {
               matches: bm.matchCount,
-              kd:  Math.round((bm.kd  / bmN) * 100) / 100,
-              adr: Math.round(bm.adr  / bmN),
+              kd:  bm.deaths > 0 ? Math.round((bm.kills / bm.deaths) * 100) / 100 : bm.kills,
+              adr: Math.round(bm.adr / bmN),
               wr:  Math.round((bm.wins / bm.matchCount) * 100),
             };
           }
