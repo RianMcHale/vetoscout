@@ -489,10 +489,50 @@ app.get('/api/setup', async (req, res) => {
 
     // Full roster from the current match room
     const rosterEntries = (oppTeam.roster || oppTeam.players || []);
-    const oppPlayers    = rosterEntries.map(p => p.player_id || p.id).filter(Boolean);
+    let oppPlayers    = rosterEntries.map(p => p.player_id || p.id).filter(Boolean);
     const nicknameMap   = Object.fromEntries(
       rosterEntries.map(p => [p.player_id || p.id, p.nickname || p.name || '?'])
     );
+
+    // ── Fetch team roster early to prioritise core players for history lookup ──
+    let teamRosterEarly = null;
+    try {
+      const ck = `roster:${oppId}`;
+      const cached = await rGet(ck);
+      if (cached) {
+        teamRosterEarly = cached;
+      } else {
+        const { data: leagueData } = await axios.get(
+          `https://www.faceit.com/api/team-leagues/v1/teams/${oppId}/profile/leagues/summary`,
+          { httpsAgent, headers: { 'Accept': 'application/json', 'faceit-referer': 'web-next' }, timeout: 8000 }
+        );
+        const leagues = leagueData?.payload || [];
+        if (leagues.length > 0) {
+          teamRosterEarly = (leagues[0].active_members || []).map(m => ({
+            id: m.user_id,
+            name: m.user_name,
+            gameRole: m.game_role === 'player' ? 'Core' : 'Substitute',
+          }));
+          await rSet(ck, teamRosterEarly, 3600); // 1hr cache
+        }
+      }
+    } catch (e) {
+      console.log(`[roster] early fetch failed: ${e.message}`);
+    }
+
+    // Prioritise core (starter) players for history intersection
+    if (teamRosterEarly) {
+      const coreIds = teamRosterEarly.filter(m => m.gameRole === 'Core').map(m => m.id);
+      // Put core players first, then any match-room players not in the roster
+      const coreSet = new Set(coreIds);
+      const nonCore = oppPlayers.filter(id => !coreSet.has(id));
+      oppPlayers = [...coreIds, ...nonCore];
+      // Update nickname map with roster names
+      for (const m of teamRosterEarly) {
+        if (!nicknameMap[m.id]) nicknameMap[m.id] = m.name;
+      }
+      console.log(`[roster] prioritised ${coreIds.length} core players for history lookup`);
+    }
 
     // Fetch match history using all 5 players' histories simultaneously.
     // Keep any match where ≥3 players appear — this finds all team matches
@@ -931,7 +971,6 @@ app.get('/api/setup', async (req, res) => {
         const level    = profile.games?.cs2?.skill_level || null;
         const elo      = profile.games?.cs2?.faceit_elo  || null;
         const matches  = acc.matchCount;
-        console.log(`[player] ${nickname}: matchCount=${acc.matchCount} roundCount=${acc.roundCount} ratio=${(acc.roundCount/acc.matchCount).toFixed(1)} entryRateSum=${acc.entryRate?.toFixed(3)} flashSRSum=${acc.flashSR?.toFixed(3)}`);
 
         // Averaged stats
         const kd        = avg(acc, 'kd');
@@ -1142,30 +1181,10 @@ app.get('/api/setup', async (req, res) => {
       myTeamStats = { name: myName, mapStats: myMapStats, matchesAnalysed: myCoreDets.length };
     }
 
-    // ── FETCH TEAM ROSTER for Core/Substitute tagging ──────────────────────
-    // Uses the internal team-leagues API to get registered team members
-    let teamRoster = null;
-    try {
-      const { data: leagueData } = await axios.get(
-        `https://www.faceit.com/api/team-leagues/v1/teams/${oppId}/profile/leagues/summary`,
-        {
-          httpsAgent,
-          headers: { 'Accept': 'application/json', 'faceit-referer': 'web-next' },
-          timeout: 8000,
-        }
-      );
-      const leagues = leagueData?.payload || [];
-      if (leagues.length > 0) {
-        const members = leagues[0].active_members || [];
-        teamRoster = members.map(m => ({
-          id: m.user_id,
-          name: m.user_name,
-          gameRole: m.game_role === 'player' ? 'Core' : 'Substitute',
-        }));
-        console.log(`[roster] ${teamRoster.length} registered members (${teamRoster.filter(m => m.gameRole === 'Core').length} core, ${teamRoster.filter(m => m.gameRole === 'Substitute').length} subs)`);
-      }
-    } catch (e) {
-      console.log(`[roster] team-leagues fetch failed: ${e.message}`);
+    // ── Reuse early roster data for Core/Substitute tagging ────────────────
+    const teamRoster = teamRosterEarly;
+    if (teamRoster) {
+      console.log(`[roster] ${teamRoster.length} registered members (${teamRoster.filter(m => m.gameRole === 'Core').length} core, ${teamRoster.filter(m => m.gameRole === 'Substitute').length} subs)`);
     }
 
     // Tag players with teamRole and filter to registered members only
@@ -1704,41 +1723,7 @@ app.get('/{*splat}', (req, res, next) => {
   res.sendFile(path.join(clientDist, 'index.html'));
 });
 
-// ── DEBUG: dump raw FACEIT stats fields for a match (REMOVE IN PRODUCTION) ──
-app.get('/api/debug-fields/:matchId', async (req, res) => {
-  try {
-    const ck = `stats:${req.params.matchId}`;
-    const cached = await rGet(ck);
-    let data;
-    if (cached) { data = cached; } 
-    else {
-      const resp = await faceit(`/matches/${req.params.matchId}/stats`);
-      data = resp.data;
-    }
-    if (!data?.rounds?.length) return res.json({ error: 'No rounds data' });
-    
-    const round = data.rounds[0];
-    const team = round.teams?.[0];
-    const player = team?.players?.[0];
-    const stats = player?.player_stats || {};
-    
-    res.json({
-      matchId: req.params.matchId,
-      totalRounds: data.rounds.length,
-      playerNickname: player?.nickname,
-      allFieldNames: Object.keys(stats),
-      sampleValues: Object.fromEntries(
-        Object.entries(stats).filter(([k]) => 
-          k.includes('Entry') || k.includes('Flash') || k.includes('1v1') || 
-          k.includes('1v2') || k.includes('K/D') || k.includes('ADR') ||
-          k.includes('Assists') || k.includes('Utility') || k.includes('Sniper')
-        )
-      ),
-    });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
+
 
 // ── Graceful error handling ──────────────────────────────────────────────
 process.on('unhandledRejection', (err) => {
