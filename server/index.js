@@ -82,12 +82,12 @@ const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 20 });
 const faceitClient = axios.create({ baseURL: FACEIT_BASE, httpsAgent, timeout: 15000 });
 
 const ACTIVE_MAP_POOL = ['Mirage', 'Inferno', 'Dust2', 'Nuke', 'Ancient', 'Anubis', 'Overpass'];
-const MAPS = ['Mirage','Inferno','Nuke','Ancient','Anubis','Dust2','Overpass'];
+const MAPS = ['Mirage','Inferno','Nuke','Ancient','Anubis','Dust2','Overpass','Train','Vertigo'];
 const MAP_ALIASES = {
   de_mirage:'Mirage', de_inferno:'Inferno', de_nuke:'Nuke', de_ancient:'Ancient',
-  de_anubis:'Anubis', de_dust2:'Dust2', de_overpass:'Overpass',
+  de_anubis:'Anubis', de_dust2:'Dust2', de_overpass:'Overpass', de_train:'Train', de_vertigo:'Vertigo',
   mirage:'Mirage', inferno:'Inferno', nuke:'Nuke', ancient:'Ancient',
-  anubis:'Anubis', dust2:'Dust2', overpass:'Overpass'
+  anubis:'Anubis', dust2:'Dust2', overpass:'Overpass', train:'Train', vertigo:'Vertigo',
 };
 
 const HISTORY_LIMIT = 200;
@@ -138,62 +138,105 @@ function adjWinRate(wins, games) {
 
 
 
-function buildRecommendation(playCounts, winCounts, banCounts, excludeMaps, activePool) {
+function buildRecommendation(playCounts, winCounts, banCounts, excludeMaps, activePool, myPermaBans) {
   const isExcluded = m => excludeMaps.some(ex => m.toLowerCase().includes(ex));
   const pool = activePool.filter(m => !isExcluded(m));
+  const permaSet = new Set((myPermaBans || []).map(m => m.trim()).filter(Boolean));
 
   const stats = pool.map(map => {
     const games = playCounts[map] || 0;
     const wins  = winCounts[map]  || 0;
     const wr    = games ? wins / games : 0;
     const bans  = banCounts[map] || 0;
-    return { map, games, wins, losses: games - wins, wr, bans };
+    const isPerma = permaSet.has(map);
+    return { map, games, wins, losses: games - wins, wr, bans, isPerma };
   });
 
-  const withData   = stats.filter(s => s.games >= 3);
-  const thinData   = withData.length === 0;
+  const permaMaps = stats.filter(s => s.isPerma);
+  const nonPerma  = stats.filter(s => !s.isPerma);
+
+  const withData   = nonPerma.filter(s => s.games >= 3);
+  const thinData   = withData.length === 0 && permaMaps.length === 0;
   const byStrength = [...withData].sort((a, b) => b.wr - a.wr);
   const byWeakness = [...withData].sort((a, b) => a.wr - b.wr);
 
+  // Permabans are always your first bans
   let ban1 = null, ban2 = null;
-  if (thinData) {
-    const byPlayed = [...stats].sort((a, b) => b.games - a.games);
-    ban1 = byPlayed[0]?.map || null;
-    ban2 = byPlayed[1]?.map || null;
-  } else {
-    ban1 = byStrength[0]?.map || null;
-    ban2 = byStrength.find(s => s.map !== ban1)?.map || null;
+  const suggestedBans = [];
+  const reasoningParts = [];
+
+  if (permaMaps.length >= 1) {
+    ban1 = permaMaps[0].map;
+    suggestedBans.push(ban1);
+    const s = permaMaps[0];
+    reasoningParts.push(`${ban1} is your permaban${s.games ? ` (opponent: ${s.games}G, ${Math.round(s.wr * 100)}% WR)` : ''}.`);
+  }
+  if (permaMaps.length >= 2) {
+    ban2 = permaMaps[1].map;
+    suggestedBans.push(ban2);
+    const s = permaMaps[1];
+    reasoningParts.push(`${ban2} is your permaban${s.games ? ` (opponent: ${s.games}G, ${Math.round(s.wr * 100)}% WR)` : ''}.`);
   }
 
+  // Fill remaining bans from opponent's strongest maps (excluding permabans)
+  if (!ban1) {
+    if (thinData) {
+      const byPlayed = [...nonPerma].sort((a, b) => b.games - a.games);
+      ban1 = byPlayed[0]?.map || null;
+      ban2 = byPlayed[1]?.map || null;
+      suggestedBans.push(...[ban1, ban2].filter(Boolean));
+    } else {
+      ban1 = byStrength[0]?.map || null;
+      ban2 = byStrength.find(s => s.map !== ban1)?.map || null;
+      suggestedBans.push(...[ban1, ban2].filter(Boolean));
+    }
+  } else if (!ban2 && withData.length > 0) {
+    // One permaban set, suggest second ban from opponent data
+    ban2 = byStrength[0]?.map || null;
+    if (ban2) {
+      suggestedBans.push(ban2);
+      const s = stats.find(s => s.map === ban2);
+      reasoningParts.push(`${ban2} is their strongest remaining map (${s?.games || 0}G, ${Math.round((s?.wr || 0) * 100)}% WR) — ban this second.`);
+    }
+  }
+
+  // Generate reasoning for non-permaban selections
+  if (permaMaps.length === 0) {
+    const s1 = stats.find(s => s.map === ban1);
+    const s2 = stats.find(s => s.map === ban2);
+    if (thinData) {
+      reasoningParts.push(`Not enough data for a confident recommendation — no map has 3+ games. Defaulting to their most-played maps` +
+        (ban1 ? ` (${ban1}${s1?.games ? `, ${s1.games}G` : ''})` : '') +
+        (ban2 ? ` and ${ban2}${s2?.games ? ` (${s2.games}G)` : ''}` : '') + `.`);
+    } else {
+      if (s1) reasoningParts.push(`${ban1} is their strongest map (${s1.games}G, ${Math.round(s1.wr * 100)}% WR).`);
+      if (s2) reasoningParts.push(`${ban2} is their second strongest map (${s2.games}G, ${Math.round(s2.wr * 100)}% WR).`);
+    }
+  }
+
+  // Add "forces them onto" weak maps
   const weakMaps = byWeakness.filter(s => s.map !== ban1 && s.map !== ban2);
-  const s1 = stats.find(s => s.map === ban1);
-  const s2 = stats.find(s => s.map === ban2);
-  const w1 = weakMaps[0];
-  const w2 = weakMaps[1];
-
-  let reasoning;
-  if (thinData) {
-    reasoning = `Not enough data for a confident recommendation — no map has 3+ games. Defaulting to their two most-played maps` +
-      (ban1 ? ` (${ban1}${s1?.games ? `, ${s1.games}G` : ''})` : '') +
-      (ban2 ? ` and ${ban2}${s2?.games ? ` (${s2.games}G)` : ''}` : '') + `.`;
-  } else {
-    const pct1  = s1 ? Math.round(s1.wr * 100) : 0;
-    const pct2  = s2 ? Math.round(s2.wr * 100) : 0;
-    const wpct1 = w1 ? Math.round(w1.wr * 100) : 0;
-    const wpct2 = w2 ? Math.round(w2.wr * 100) : 0;
-    reasoning =
-      (ban1 ? `${ban1} is their strongest map (${s1?.games || 0}G, ${pct1}% WR).` : '') +
-      (ban2 ? ` ${ban2} is their second strongest map (${s2?.games || 0}G, ${pct2}% WR).` : '') +
-      (w1 || w2
-        ? ` This forces them onto` +
-          (w1 ? ` ${w1.map} (${wpct1}% WR, ${w1.games}G)` : '') +
-          (w1 && w2 ? ' or' : '') +
-          (w2 ? ` ${w2.map} (${wpct2}% WR, ${w2.games}G)` : '') +
-          ` where they struggle most.`
-        : '');
+  if (weakMaps.length > 0) {
+    const w1 = weakMaps[0];
+    const w2 = weakMaps[1];
+    reasoningParts.push(`This forces them onto` +
+      (w1 ? ` ${w1.map} (${Math.round(w1.wr * 100)}% WR, ${w1.games}G)` : '') +
+      (w1 && w2 ? ' or' : '') +
+      (w2 ? ` ${w2.map} (${Math.round(w2.wr * 100)}% WR, ${w2.games}G)` : '') +
+      ` where they struggle most.`);
   }
 
-  return { suggestedBans: [ban1, ban2].filter(Boolean), reasoning: reasoning.trim(), lowConfidence: thinData };
+  // Predicted opponent bans
+  const oppBanOrder = [...pool].sort((a, b) => (banCounts[b] || 0) - (banCounts[a] || 0));
+
+  return {
+    suggestedBans: suggestedBans.filter(Boolean),
+    reasoning: reasoningParts.join(' ').trim(),
+    lowConfidence: thinData,
+    permaBans: [...permaSet],
+    oppBan1: oppBanOrder[0] || null,
+    oppBan2: oppBanOrder[1] || null,
+  };
 }
 
 
@@ -1213,7 +1256,7 @@ app.post('/api/stats', (req, res) => {
 
   // Pass myPermaBans so recommendation avoids suggesting maps we already plan to ban
   const recommendation = buildRecommendation(playCounts, winCounts, banCounts,
-    [...excludeMaps, ...myPermaBans], activePool);
+    excludeMaps, activePool, myPermaBans);
 
   console.log(`[stats] ${countedMatchIds.size} matches | bans: ${JSON.stringify(sortedBans.slice(0,3))}`);
 

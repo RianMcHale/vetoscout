@@ -1,4 +1,4 @@
-export const MAPS = ['Mirage','Inferno','Nuke','Ancient','Anubis','Dust2','Overpass'];
+export const MAPS = ['Mirage','Inferno','Nuke','Ancient','Anubis','Dust2','Overpass','Train','Vertigo'];
 
 export const ACTIVE_MAP_POOL = ['Mirage','Inferno','Dust2','Nuke','Ancient','Anubis','Overpass'];
 
@@ -10,8 +10,8 @@ export const MAP_COLORS = {
   Anubis:   '#4a9eff',
   Dust2:    '#e84b9c',
   Overpass: '#7ecb6a',
-  // Train:    '#888899',
-  // Vertigo:  '#c1a05e',
+  Train:    '#888899',
+  Vertigo:  '#c1a05e',
 };
 
 /**
@@ -35,17 +35,20 @@ export function getVetoRecommendation(stats, poolMaps) {
   if (stats.recommendation?.suggestedBans?.length) {
     const [yourBan1, yourBan2] = stats.recommendation.suggestedBans;
 
-    // Predicted opponent bans: their most-banned maps from history
+    const oppBan1 = stats.recommendation.oppBan1 || null;
+    const oppBan2 = stats.recommendation.oppBan2 || null;
+    // Fallback opponent bans from ban frequency
     const oppBanOrder = [...poolMaps].sort(
       (a, b) => (stats.banCounts[b] || 0) - (stats.banCounts[a] || 0)
     );
     return {
       yourBan1: yourBan1 || oppBanOrder[0],
       yourBan2: yourBan2 || oppBanOrder[1],
-      oppBan1: oppBanOrder[0],
-      oppBan2: oppBanOrder[1],
+      oppBan1: oppBan1 || oppBanOrder[0],
+      oppBan2: oppBan2 || oppBanOrder[1],
       reasoning: stats.recommendation.reasoning,
       lowConfidence: stats.recommendation.lowConfidence || false,
+      permaBans: stats.recommendation.permaBans || stats.myPermaBans || [],
     };
   }
 

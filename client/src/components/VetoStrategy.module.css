@@ -141,3 +141,40 @@
 @media (max-width: 700px) {
   .grid { grid-template-columns: 1fr; }
 }
+
+.permaNote {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.permaTag {
+  background: rgba(240,170,60,0.12);
+  border: 1px solid rgba(240,170,60,0.25);
+  color: var(--accent);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 11px;
+}
+.stepPerma {
+  border-left: 2px solid var(--accent);
+  padding-left: 10px;
+}
+.permaBadge {
+  display: inline-block;
+  margin-left: 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  background: rgba(240,170,60,0.15);
+  border: 1px solid rgba(240,170,60,0.3);
+  color: var(--accent);
+  padding: 1px 6px;
+  border-radius: 3px;
+  vertical-align: middle;
+}
