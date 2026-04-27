@@ -1207,7 +1207,7 @@ app.post('/api/stats', (req, res) => {
   const { matchSummaries, bansByMatchId, excludeMaps: excludeRaw, myPermaBans: permaBanRaw,
           internalStatsByMatchId, oppTeamId } = req.body;
   const excludeMaps  = (excludeRaw  || '').split(',').map(m => m.trim().toLowerCase()).filter(Boolean);
-  const myPermaBans  = (permaBanRaw || '').split(',').map(m => m.trim().toLowerCase()).filter(Boolean);
+  const myPermaBans  = (permaBanRaw || '').split(',').map(m => m.trim()).filter(Boolean);
   const isExcluded   = map => excludeMaps.some(ex => map.toLowerCase().includes(ex));
 
   const banCounts = {}, playCounts = {}, winCounts = {}, pickCounts = {}, deciderCounts = {};
