@@ -1703,6 +1703,42 @@ app.get('/{*splat}', (req, res, next) => {
   res.sendFile(path.join(clientDist, 'index.html'));
 });
 
+// ── DEBUG: dump raw FACEIT stats fields for a match (REMOVE IN PRODUCTION) ──
+app.get('/api/debug-fields/:matchId', async (req, res) => {
+  try {
+    const ck = `stats:${req.params.matchId}`;
+    const cached = await rGet(ck);
+    let data;
+    if (cached) { data = cached; } 
+    else {
+      const resp = await faceit(`/matches/${req.params.matchId}/stats`);
+      data = resp.data;
+    }
+    if (!data?.rounds?.length) return res.json({ error: 'No rounds data' });
+    
+    const round = data.rounds[0];
+    const team = round.teams?.[0];
+    const player = team?.players?.[0];
+    const stats = player?.player_stats || {};
+    
+    res.json({
+      matchId: req.params.matchId,
+      totalRounds: data.rounds.length,
+      playerNickname: player?.nickname,
+      allFieldNames: Object.keys(stats),
+      sampleValues: Object.fromEntries(
+        Object.entries(stats).filter(([k]) => 
+          k.includes('Entry') || k.includes('Flash') || k.includes('1v1') || 
+          k.includes('1v2') || k.includes('K/D') || k.includes('ADR') ||
+          k.includes('Assists') || k.includes('Utility') || k.includes('Sniper')
+        )
+      ),
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ── Graceful error handling ──────────────────────────────────────────────
 process.on('unhandledRejection', (err) => {
   console.error('[fatal] Unhandled rejection:', err?.message || err);
